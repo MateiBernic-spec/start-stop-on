@@ -1,0 +1,23 @@
+name: Actualizează datele OSM
+on:
+  workflow_dispatch:
+  push:
+    paths: ['scripts/build-data.mjs', '.github/workflows/data.yml']
+  schedule:
+    - cron: '0 4 * * 1'
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: node scripts/build-data.mjs
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data
+          git diff --cached --quiet || git commit -m "Actualizează datele OSM pentru Iași"
+          git pull --rebase && git push

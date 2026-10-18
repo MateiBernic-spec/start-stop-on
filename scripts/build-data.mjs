@@ -1,6 +1,7 @@
 // Descarcă din OpenStreetMap străzile, semafoarele și instituțiile din Iași
 // și le salvează în data/osm.json, ca site-ul să nu mai depindă de Overpass live.
-import { writeFile } from 'node:fs/promises';
+import { writeFile, mkdir } from 'node:fs/promises';
+await mkdir('data', { recursive: true });
 const BBOX = '47.080,27.460,47.225,27.700';
 const EPS = ['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter','https://overpass.private.coffee/api/interpreter'];
 const UA = 'start-stop-on-data-builder (github.com/MateiBernic-spec/start-stop-on)';
@@ -20,10 +21,9 @@ const R5 = x => Math.round(x * 1e5) / 1e5;
 const Q = `[out:json][timeout:240];
 (node["highway"="traffic_signals"](${BBOX});node["crossing"="traffic_signals"](${BBOX}););
 out;
-(
-  way["highway"~"^(trunk|primary|secondary|tertiary)(_link)?$"](${BBOX});
-  way(bn)["highway"~"^(residential|unclassified|living_street)$"];
-);
+way(bn)["highway"~"^(residential|unclassified|living_street)$"]->.sw;
+way["highway"~"^(trunk|primary|secondary|tertiary)(_link)?$"](${BBOX})->.mw;
+(.mw;.sw;);
 out geom tags;
 nwr["amenity"~"^(hospital|school|kindergarten)$"](${BBOX});
 out center tags;`;

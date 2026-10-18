@@ -928,6 +928,7 @@ bind('tTraffic',layers.traffic);bind('tSig',layers.sig);bind('tHoods',layers.hoo
 ['core','entry','inner','sens','off'].forEach(k=>bind('t_'+k,layers[k]));
 const mp=$('mpanel');
 $('mtoggle').onclick=()=>{mp.classList.toggle('closed');$('mtoggle').textContent=mp.classList.contains('closed')?'Arată legenda':'Ascunde legenda'};
+if(window.matchMedia('(max-width:700px)').matches){mp.classList.add('closed');$('mtoggle').textContent='Arată legenda'}
 L.DomEvent.disableClickPropagation(mp);L.DomEvent.disableScrollPropagation(mp);
 })();
 </script>

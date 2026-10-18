@@ -1,6 +1,9 @@
-overpass fail https://overpass-api.de/api/interpreter 502
-signals 0 roads 0 sens 0 border 115 bytes 47827
+overpass fail https://overpass-api.de/api/interpreter 504
+overpass fail https://overpass.kumi.systems/api/interpreter 500
+overpass fail https://overpass.private.coffee/api/interpreter 500
 overpass fail https://overpass-api.de/api/interpreter 502
 overpass fail https://overpass.kumi.systems/api/interpreter 500
 overpass fail https://overpass.private.coffee/api/interpreter 500
-streets 3033 places 456
+signals 438 roads 3719 sens 276 border 115 bytes 572664
+communes 98
+streets 2893 places 456

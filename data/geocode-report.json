@@ -1,0 +1,563 @@
+{
+ "nom": {
+  "Podu Roș, Iași": [
+   {
+    "n": "Podu Roș, Podul Roș, Iași",
+    "t": "place/neighbourhood",
+    "c": [
+     47.15056,
+     27.58651
+    ]
+   },
+   {
+    "n": "Podu Roș, Podul Roș, Iași",
+    "t": "highway/secondary",
+    "c": [
+     47.15187,
+     27.58762
+    ]
+   }
+  ],
+  "Piața Unirii, Iași": [
+   {
+    "n": "Piața Unirii, Centru, Iași",
+    "t": "highway/pedestrian",
+    "c": [
+     47.16669,
+     27.58012
+    ]
+   },
+   {
+    "n": "Piața Unirii, Centru, Iași",
+    "t": "highway/service",
+    "c": [
+     47.16624,
+     27.58074
+    ]
+   },
+   {
+    "n": "Piața Unirii, Centru, Iași",
+    "t": "highway/service",
+    "c": [
+     47.1658,
+     27.58049
+    ]
+   }
+  ],
+  "Târgu Cucu, Iași": [
+   {
+    "n": "Târgu Cucu, Strada Cuza Vodă, Centru",
+    "t": "highway/bus_stop",
+    "c": [
+     47.16422,
+     27.59023
+    ]
+   },
+   {
+    "n": "Târgu Cucu, Strada Cuza Vodă, Centru",
+    "t": "railway/tram_stop",
+    "c": [
+     47.16423,
+     27.5909
+    ]
+   },
+   {
+    "n": "Târgu Cucu, Strada Sărărie, Centru",
+    "t": "highway/bus_stop",
+    "c": [
+     47.16463,
+     27.59088
+    ]
+   }
+  ],
+  "Iulius Mall, Iași": [
+   {
+    "n": "Iulius Mall, Bulevardul Tudor Vladimirescu, Tudor Vladimirescu",
+    "t": "shop/mall",
+    "c": [
+     47.15529,
+     27.60574
+    ]
+   },
+   {
+    "n": "Altex, Bulevardul Tudor Vladimirescu, Tudor Vladimirescu",
+    "t": "shop/electronics",
+    "c": [
+     47.15574,
+     27.60518
+    ]
+   }
+  ],
+  "CUG, Iași": [
+   {
+    "n": "Lac CUG 2, Frumoasa, Miroslava",
+    "t": "natural/water",
+    "c": [
+     47.124,
+     27.56454
+    ]
+   },
+   {
+    "n": "PMI - Amenajare mal lac CUG II, Frumoasa, Miroslava",
+    "t": "landuse/greenfield",
+    "c": [
+     47.12234,
+     27.56587
+    ]
+   },
+   {
+    "n": "Punct termic 9 CUG, Șoseaua Nicolina, Nicolina",
+    "t": "building/industrial",
+    "c": [
+     47.13754,
+     27.57513
+    ]
+   }
+  ],
+  "Pasajul Nicolina, Iași": [],
+  "Gara Iași": [
+   {
+    "n": "Gara Iași, 1, Strada Silvestru",
+    "t": "building/train_station",
+    "c": [
+     47.16553,
+     27.56987
+    ]
+   }
+  ],
+  "Tătărași, Iași": [
+   {
+    "n": "Tătărași Nord, Iași, Zona Metropolitană Iași",
+    "t": "place/suburb",
+    "c": [
+     47.16104,
+     27.61135
+    ]
+   },
+   {
+    "n": "Tătărași, Strada Fulger, Tătărași Nord",
+    "t": "amenity/restaurant",
+    "c": [
+     47.16371,
+     27.60479
+    ]
+   }
+  ],
+  "Calea Chișinăului, Iași": [
+   {
+    "n": "Calea Chișinăului, Țesătura, Iași",
+    "t": "highway/primary",
+    "c": [
+     47.1485,
+     27.59832
+    ]
+   },
+   {
+    "n": "Calea Chișinăului, Baza 3, Bularga",
+    "t": "highway/primary",
+    "c": [
+     47.14687,
+     27.60995
+    ]
+   },
+   {
+    "n": "Calea Chișinăului, Zona Industrială, Iași",
+    "t": "highway/primary",
+    "c": [
+     47.14568,
+     27.61945
+    ]
+   }
+  ],
+  "Lunca Cetățuii": [
+   {
+    "n": "Lunca Cetățuii, Zona Metropolitană Iași, Iași",
+    "t": "place/village",
+    "c": [
+     47.09615,
+     27.56293
+    ]
+   },
+   {
+    "n": "Lunca Cetățuii, Ciurea, Zona Metropolitană Iași",
+    "t": "place/village",
+    "c": [
+     47.09313,
+     27.56618
+    ]
+   }
+  ],
+  "Valea Lupului, Iași": [
+   {
+    "n": "Valea Lupului, Zona Metropolitană Iași, Iași",
+    "t": "boundary/administrative",
+    "c": [
+     47.17739,
+     27.50214
+    ]
+   }
+  ],
+  "Dancu, Holboca": [
+   {
+    "n": "Dancu, Holboca, Zona Metropolitană Iași",
+    "t": "place/suburb",
+    "c": [
+     47.1532,
+     27.66169
+    ]
+   },
+   {
+    "n": "Dancu, Șoseaua Iași-Ungheni, Dancu",
+    "t": "railway/tram_stop",
+    "c": [
+     47.15158,
+     27.65957
+    ]
+   }
+  ],
+  "Breazu, Rediu": [
+   {
+    "n": "Breazu, Rediu, Zona Metropolitană Iași",
+    "t": "place/village",
+    "c": [
+     47.21663,
+     27.51695
+    ]
+   },
+   {
+    "n": "Breazu, Rediu, Zona Metropolitană Iași",
+    "t": "place/village",
+    "c": [
+     47.20476,
+     27.50671
+    ]
+   },
+   {
+    "n": "Rediu, Breazu, Rediu",
+    "t": "waterway/stream",
+    "c": [
+     47.19448,
+     27.52159
+    ]
+   }
+  ],
+  "Piața Voievozilor, Iași": [
+   {
+    "n": "Piața Voievozilor, Alexandru cel Bun, Iași",
+    "t": "leisure/park",
+    "c": [
+     47.16201,
+     27.56291
+    ]
+   },
+   {
+    "n": "Piața Voievozilor, Alexandru cel Bun, Iași",
+    "t": "highway/footway",
+    "c": [
+     47.16184,
+     27.56277
+    ]
+   },
+   {
+    "n": "Piața Voievozilor, Alexandru cel Bun, Iași",
+    "t": "highway/footway",
+    "c": [
+     47.16269,
+     27.56168
+    ]
+   }
+  ],
+  "Pasajul Octav Băncilă, Iași": [
+   {
+    "n": "Pasajul Octav Băncilă Pictor, Canta, Păcurari",
+    "t": "highway/secondary",
+    "c": [
+     47.17242,
+     27.56216
+    ]
+   }
+  ],
+  "Moara de Foc, Iași": [
+   {
+    "n": "Șoseaua Moara de Foc, Canta, Gară",
+    "t": "highway/primary",
+    "c": [
+     47.1701,
+     27.56355
+    ]
+   },
+   {
+    "n": "Șoseaua Moara de Foc, Canta, Păcurari",
+    "t": "highway/primary",
+    "c": [
+     47.17275,
+     27.55522
+    ]
+   },
+   {
+    "n": "Șoseaua Moara de Foc, Canta, Iași",
+    "t": "highway/primary",
+    "c": [
+     47.17356,
+     27.55156
+    ]
+   }
+  ],
+  "Piața Mihai Eminescu, Iași": [
+   {
+    "n": "Piața Mihai Eminescu, Strada Gavril Muzicescu, Centru",
+    "t": "railway/platform",
+    "c": [
+     47.16886,
+     27.57684
+    ]
+   },
+   {
+    "n": "Piața Mihai Eminescu, Strada Gavril Muzicescu, Centru",
+    "t": "highway/bus_stop",
+    "c": [
+     47.16877,
+     27.57698
+    ]
+   },
+   {
+    "n": "Piața Mihai Eminescu, Strada Gavril Muzicescu, Centru",
+    "t": "railway/tram_stop",
+    "c": [
+     47.16873,
+     27.57681
+    ]
+   }
+  ],
+  "Bulevardul Chimiei, Iași": [
+   {
+    "n": "Bulevardul Chimiei, Tătărași Sud, Iași",
+    "t": "highway/secondary",
+    "c": [
+     47.15299,
+     27.6129
+    ]
+   },
+   {
+    "n": "Bulevardul Chimiei, Zona Industrială, Iași",
+    "t": "highway/secondary",
+    "c": [
+     47.1523,
+     27.61282
+    ]
+   },
+   {
+    "n": "Bulevardul Chimiei, Zona Industrială, Iași",
+    "t": "highway/tertiary",
+    "c": [
+     47.14967,
+     27.63577
+    ]
+   }
+  ],
+  "Bucium, Iași": [
+   {
+    "n": "Bucium, Iași, Zona Metropolitană Iași",
+    "t": "place/suburb",
+    "c": [
+     47.12427,
+     27.62225
+    ]
+   },
+   {
+    "n": "Bucium, Iași, Zona Metropolitană Iași",
+    "t": "waterway/stream",
+    "c": [
+     47.11904,
+     27.63272
+    ]
+   },
+   {
+    "n": "Cramele Bucium, 84, Șoseaua Nicolina",
+    "t": "shop/beverages",
+    "c": [
+     47.1302,
+     27.56927
+    ]
+   }
+  ],
+  "Parcul Copou, Iași": [
+   {
+    "n": "Parcul Copou, Păcurari, Iași",
+    "t": "leisure/park",
+    "c": [
+     47.17889,
+     27.5668
+    ]
+   }
+  ],
+  "Spitalul Sfântul Spiridon, Iași": [],
+  "Palas, Iași": [
+   {
+    "n": "Palas, Centru, Iași",
+    "t": "landuse/commercial",
+    "c": [
+     47.15643,
+     27.58765
+    ]
+   }
+  ],
+  "Rond Gara Iași": [],
+  "Piața Mihai Eminescu": [
+   {
+    "n": "Piața Mihai Eminescu, Strada Gavril Muzicescu, Centru",
+    "t": "railway/platform",
+    "c": [
+     47.16886,
+     27.57684
+    ]
+   },
+   {
+    "n": "Piața Mihai Eminescu, Strada Gavril Muzicescu, Centru",
+    "t": "railway/tram_stop",
+    "c": [
+     47.16873,
+     27.57681
+    ]
+   },
+   {
+    "n": "Piața Mihai Eminescu, Strada Gavril Muzicescu, Centru",
+    "t": "highway/bus_stop",
+    "c": [
+     47.16877,
+     27.57698
+    ]
+   }
+  ],
+  "Rondul Podu Roș": []
+ },
+ "inter": {
+  "Cantemir × Iorga": [
+   [
+    47.1498,
+    27.57816
+   ],
+   [
+    47.14973,
+    27.57824
+   ],
+   [
+    47.14966,
+    27.57811
+   ],
+   [
+    47.14972,
+    27.57802
+   ]
+  ],
+  "Vladimirescu × Iorga": [],
+  "Vladimirescu × Cantemir": [],
+  "Târgu Cucu × Cantemir": [],
+  "Independenței × Cuza Vodă": [],
+  "Independenței × Carol": [],
+  "Nicolina × Primăverii": [],
+  "Nicolina × Poitiers": [
+   [
+    47.13424,
+    27.57282
+   ],
+   [
+    47.13429,
+    27.57265
+   ],
+   [
+    47.13435,
+    27.57269
+   ],
+   [
+    47.1343,
+    27.57286
+   ]
+  ],
+  "Nicolina × Ciurea": "Error: Overpass indisponibil",
+  "Păcurari × Octav Băncilă": [
+   [
+    47.17273,
+    27.56245
+   ],
+   [
+    47.17268,
+    27.56241
+   ]
+  ],
+  "Păcurari × Arcu": [
+   [
+    47.17061,
+    27.5658
+   ]
+  ],
+  "Silvestru × Gării": [
+   [
+    47.16611,
+    27.57107
+   ],
+   [
+    47.16603,
+    27.57088
+   ]
+  ],
+  "Chi.in.ului × Socola": [],
+  "Chi.in.ului × Vladimirescu": [
+   [
+    47.14798,
+    27.60215
+   ],
+   [
+    47.14812,
+    27.60219
+   ],
+   [
+    47.1481,
+    27.60235
+   ],
+   [
+    47.14795,
+    27.60231
+   ]
+  ],
+  "Alexandru cel Bun × Dacia": [],
+  "Moara de Foc × Socola": [],
+  "Carol × Eminescu": [
+   [
+    47.16967,
+    27.5763
+   ],
+   [
+    47.16984,
+    27.5769
+   ]
+  ],
+  "Chimiei × Chi.in.ului": [],
+  "Vladimirescu × Chi.in.ului": [
+   [
+    47.14798,
+    27.60215
+   ],
+   [
+    47.14812,
+    27.60219
+   ],
+   [
+    47.1481,
+    27.60235
+   ],
+   [
+    47.14795,
+    27.60231
+   ]
+  ],
+  "Ciurea × Lunca": [],
+  "Păcurari × Valea Lupului": [],
+  "Copou × Breazu": [
+   [
+    47.21487,
+    27.52656
+   ]
+  ]
+ }
+}

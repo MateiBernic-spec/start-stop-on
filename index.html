@@ -1304,7 +1304,7 @@ function showRoute(rt){
   const e=rEngine(),f=FUEL[e.f],price=rPrice(e.f);
   const pRed=Math.min(100,Math.max(0,+$('rRed').value||0))/100,wait=Math.max(0,+$('rWait').value||0);
   const eff=Math.min(100,Math.max(0,+$('cEff').value||80))/100;
-  const trips=$('rBack').checked?2:1,days=Math.max(0,+$('rDays').value||0);
+  const trips=$('rBack').checked?2:1,days=Math.min(366,Math.max(1,Math.round(+$('rDays').value)||250));
   const tol=rt.exact?25:150;
   const passed=getClusters().filter(c=>distToLine(c,rt.line)<=tol);
   const stops=passed.length*pRed;                       // opriri la roșu pe un drum
@@ -1390,6 +1390,7 @@ $('routeForm').addEventListener('submit',async e=>{
   try{
     const [a,b]=await Promise.all([geocode($('rFrom')),geocode($('rTo'))]);
     if(!a||!b){$('rRes').innerHTML=`<div class="k">Rezultat pe traseu</div><p class="empty">Nu am găsit ${!a?'punctul de plecare':'destinația'}. Începe să scrii numele străzii și alege din listă.</p>`;return}
+    if(hav(a.c,b.c)<150){lastRoute=null;$('rRes').innerHTML=`<div class="k">Rezultat pe traseu</div><p class="empty">Plecarea și destinația sunt practic în același loc. Alege două puncte diferite.</p>`;return}
     if(!sigPts.length){try{const j=await (await fetch('data/osm.json')).json();j.sig.forEach(p=>sigPts.push(p))}catch(_){}}
     const rt=await getRoute(a.c,b.c);rt.from=a.label;rt.to=b.label;showRoute(rt);
   }catch(err){$('rRes').innerHTML='<div class="k">Rezultat pe traseu</div><p class="empty">Ceva n-a mers. Încearcă din nou.</p>'}

@@ -665,7 +665,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
         <div class="grp">
           <div class="gh"><span>Infrastructură</span><span class="dt osm">OSM</span></div>
           <label class="tog"><input type="checkbox" id="tSig" checked><span style="width:12px;height:12px;border-radius:50%;background:var(--red);border:2px solid #fff;flex:none;margin:0 7px"></span>Semafoare<span class="km" id="nSig"></span></label>
-          <label class="tog"><input type="checkbox" id="t_sens" checked><span class="sw" style="border-color:var(--sens);background:rgba(255,255,255,.25)"></span>Școli și spitale</label>
+          <label class="tog"><input type="checkbox" id="t_sens" checked><span class="sw" style="border-color:transparent;background:rgba(255,255,255,.35)"></span>Școli și spitale</label>
           <label class="tog"><input type="checkbox" id="tBorder" checked><span class="ln" style="background:repeating-linear-gradient(90deg,#fff 0 6px,transparent 6px 10px)"></span>Limita județului</label>
         </div>
         <div class="grp">
@@ -1313,6 +1313,31 @@ const renderer=L.canvas({padding:.5});
 // conturul negru al străzilor stă într-un strat propriu, mereu sub culori (altfel, la readăugare, ajunge deasupra și le întunecă)
 map.createPane('casingPane').style.zIndex=390;
 const casingRenderer=L.canvas({padding:.5,pane:'casingPane'});
+// zonele sensibile: toate cercurile într-un singur canvas, cu opacitatea pe tot stratul,
+// ca suprapunerile să nu se adune și să arate ca o singură zonă
+map.createPane('sensPane').style.zIndex=395;map.getPane('sensPane').style.opacity=.24;
+const sensRenderer=L.canvas({padding:.5,pane:'sensPane'});
+function drawSens(){
+  layers.sens.clearLayers();
+  // grupăm instituțiile ale căror cercuri se suprapun mult (centrul uneia e în cercul celeilalte)
+  const n=sensPts.length,par=[...Array(n).keys()],f=i=>par[i]===i?i:(par[i]=f(par[i]));
+  for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){const a=sensPts[i],b=sensPts[j];if(hav(a.c,b.c)<Math.max(a.r,b.r))par[f(i)]=f(j)}
+  const groups=new Map();sensPts.forEach((p,i)=>{const k=f(i);(groups.get(k)||groups.set(k,[]).get(k)).push(p)});
+  for(const g of groups.values()){
+    const c=[g.reduce((a,p)=>a+p.c[0],0)/g.length,g.reduce((a,p)=>a+p.c[1],0)/g.length];
+    const maxr=Math.max(...g.map(p=>p.r)),r=Math.min(maxr*1.4,Math.max(...g.map(p=>hav(c,p.c)+p.r)));
+    const circ=L.circle(c,{renderer:sensRenderer,pane:'sensPane',radius:r,stroke:false,fillColor:'#FFFFFF',fillOpacity:1});
+    circ.on('click',e=>{L.DomEvent.stop(e);showInfo(g.length===1?sensInfo(g[0]):sensGroupInfo(g,r))});
+    layers.sens.addLayer(circ);
+  }
+}
+function sensGroupInfo(g,r){
+  const hosp=g.some(p=>p.am==='hospital'),names=g.map(p=>p.name);
+  const list=names.slice(0,5).map(esc).join(' · ')+(names.length>5?` și încă ${names.length-5}`:'');
+  return{types:['osm'],title:`${g.length} instituții apropiate`,sub:`zonă sensibilă comună, rază ≈ ${fmt(r)} m`,
+    body:`${list}. Cercurile lor se suprapuneau, așa că apar ca o singură zonă. Instituțiile există în OpenStreetMap; raza e o propunere a echipei.`,
+    rule:'Start-stop forțat chiar și la trafic mediu. '+(hosp?'Lângă spital: toată ziua.':'Mai ales între 07:30 și 08:15, când părinții opresc cu motorul pornit.')};
+}
 const casing=L.layerGroup().addTo(map);const towns=L.layerGroup();const lines=[];
 const layers={traffic:L.layerGroup(),sig:L.layerGroup(),core:L.layerGroup(),entry:L.layerGroup(),inner:L.layerGroup(),sens:L.layerGroup(),off:L.layerGroup(),hoods:L.layerGroup()};
 Object.values(layers).forEach(l=>l.addTo(map));
@@ -1350,10 +1375,12 @@ function draw(data){
     const tags=el.tags||{};
     if(tags.amenity&&SENS[tags.amenity]){
       const lat=el.lat??(el.center&&el.center.lat),lon=el.lon??(el.center&&el.center.lon);if(lat==null)continue;
-      const s=SENS[tags.amenity];cnt[tags.amenity]++;
-      sensPts.push({c:[lat,lon],r:s.r,name:tags.name||s.label,label:s.label,note:s.note});
-      const sp=sensPts[sensPts.length-1];
-      layers.sens.addLayer(L.circle([lat,lon],{radius:s.r,color:'#FFFFFF',weight:1.5,fillColor:'#FFFFFF',fillOpacity:.14}).on('click',e=>{L.DomEvent.stop(e);showInfo(sensInfo(sp))}));
+      const s=SENS[tags.amenity];
+      // aceeași instituție apare uneori de două ori în OSM (punct + clădire): o păstrăm o singură dată
+      const nm=norm(tags.name||''),c=[lat,lon];
+      if(sensPts.some(q=>q.am===tags.amenity&&((nm&&norm(q.name)===nm&&hav(q.c,c)<250)||hav(q.c,c)<40)))continue;
+      cnt[tags.amenity]++;
+      sensPts.push({c,r:s.r,name:tags.name||s.label,label:s.label,note:s.note,am:tags.amenity});
     }else if(el.type==='way'&&el.geometry&&tags.highway){const g=el.geometry,m=g[g.length>>1];groups[classify(tags,[m.lat,m.lon])].push(el)}
     else if(el.type==='node'&&tags.highway==='traffic_signals'){sigPts.push([el.lat,el.lon]);
       layers.sig.addLayer(L.circleMarker([el.lat,el.lon],{renderer,radius:4,color:'#fff',weight:1.5,fillColor:'#E5383B',fillOpacity:1}).on('click',e=>{L.DomEvent.stop(e);showInfo(sigInfo())}));}
@@ -1364,6 +1391,7 @@ function draw(data){
     const ln=L.polyline(ll,{renderer,color:COL[k],weight:wgt,opacity:.95});ln._w=wgt;lines.push(ln);ln.on('click',e=>{L.DomEvent.stop(e);showInfo(roadInfo(w,k))});layers.traffic.addLayer(ln);
     km+=lenKm(w.geometry);
   }
+  drawSens();
   zoomStyle(true);
   const total=cnt.hospital+cnt.school+cnt.kindergarten;
   const nInter=clusterCount(sigPts,40);

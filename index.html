@@ -383,6 +383,21 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
 .rv-wait{opacity:0;transform:translateY(18px)}
 .rv-in{animation:rvIn .7s var(--ease) both;animation-delay:var(--rvd,0s)}
 @keyframes rvIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+/* 1b. intrarea pe site: capul paginii apare pe rând (clasa .intro e pusă înainte de prima afișare; fără JS totul e vizibil) */
+.intro nav{animation:rvFade .6s var(--ease) both}
+.intro .hero .eyebrow{animation:rvIn .7s var(--ease) .05s both}
+.intro .hero h1{animation:rvIn .8s var(--ease) .15s both}
+.intro .hero .lead{animation:rvIn .7s var(--ease) .3s both}
+.intro .hero .search-form{animation:rvIn .7s var(--ease) .42s both}
+.intro .hero .signal{animation:rvIn .8s var(--ease) .3s both}
+.intro .hero .signal .lvl{animation:rvIn .6s var(--ease) both}
+.intro .hero .signal .lvl:nth-of-type(1){animation-delay:.55s}.intro .hero .signal .lvl:nth-of-type(2){animation-delay:.67s}.intro .hero .signal .lvl:nth-of-type(3){animation-delay:.79s}
+.intro .hero .lamp{animation:lampOn .9s var(--ease) both}
+.intro .hero .signal .lvl:nth-of-type(1) .lamp{animation-delay:.7s}.intro .hero .signal .lvl:nth-of-type(2) .lamp{animation-delay:.82s}.intro .hero .signal .lvl:nth-of-type(3) .lamp{animation-delay:.94s}
+.intro .hero .stat{animation:rvIn .7s var(--ease) both}
+.intro .hero .stat:nth-child(1){animation-delay:.6s}.intro .hero .stat:nth-child(2){animation-delay:.68s}.intro .hero .stat:nth-child(3){animation-delay:.76s}.intro .hero .stat:nth-child(4){animation-delay:.84s}.intro .hero .stat:nth-child(5){animation-delay:.92s}
+@keyframes rvFade{from{opacity:0}to{opacity:1}}
+@keyframes lampOn{0%{opacity:.15;transform:scale(.6);box-shadow:none}60%{opacity:1;transform:scale(1.15)}100%{opacity:1;transform:none}}
 /* 3. hartă: senzori live care pulsează, pane-uri care se estompează lin, traseu desenat */
 .livepin{position:relative;width:0;height:0}
 .livepin i{position:absolute;left:-8px;top:-8px;width:16px;height:16px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 3px #0E161C;background:var(--c)}
@@ -416,10 +431,11 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
 .stc,.bcard,.bh,.zcard,.ccol{transition:transform .25s var(--ease),box-shadow .25s}
 .stc:hover,.bcard:hover,.zcard:hover{transform:translateY(-3px);box-shadow:0 12px 28px rgba(19,33,43,.08)}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.cbar .fill{transition:none}
-  .rv-wait{opacity:1;transform:none}.rv-in,.livepin b,.rsig,.rpin,.minfo.in,.swap{animation:none!important}
+  .rv-wait{opacity:1;transform:none}.intro *,.intro nav{animation:none!important}.rv-in,.livepin b,.rsig,.rpin,.minfo.in,.swap{animation:none!important}
   .leaflet-pane,.route-draw,.simr,.cres,.minfo.out,.stc,.bcard,.bh,.zcard,.ccol,.zcard li button{transition:none!important}
   .search button,.rbtn,.chip,.ghost,.mseg button,.result button,.btn,#clearRoute{transition:none!important;transform:none!important}}
 </style>
+<script>try{if(!matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.classList.add('intro')}catch(e){}</script>
 <nav aria-label="Navigare principală">
   <div class="wrap">
     <a class="brand" href="#top"><svg viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="12" fill="#0F7B6C"/><path d="M13 6.5v6M9.2 9a5.5 5.5 0 1 0 7.6 0" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>Start-Stop <span style="color:var(--accent)">ON</span></a>
@@ -1129,7 +1145,7 @@ function countTile(b){
   const to=+m[1].replace(/\./g,''),suf=m[2];const node=b.childNodes[0];
   tween(b,to,v=>{node.textContent=fmt(v)+suf},1100);
 }
-document.querySelectorAll('.stats .stat b').forEach(b=>{if(b.id!=='statRound')countTile(b)});
+setTimeout(()=>document.querySelectorAll('.stats .stat b').forEach(b=>{if(b.id!=='statRound')countTile(b)}),REDUCE?0:600);
 
 /* ---------------- CĂUTARE ---------------- */
 /* ---------- INDEX DE STRĂZI + AUTOCOMPLETE ---------- */
@@ -1503,7 +1519,7 @@ fetch('data/roundabouts.json').then(r=>r.json()).then(rs=>{
     c.on('click',e=>{L.DomEvent.stop(e);showInfo(zoneInfo(z))});layers.round.addLayer(c);circles[z.n]=c;
   }
   const city=add.filter(z=>z.city).sort((a,b)=>b.d-a.d);
-  tween($('statRound'),city.length,v=>$('statRound').textContent=fmt(v),900);
+  setTimeout(()=>tween($('statRound'),city.length,v=>$('statRound').textContent=fmt(v),900),Math.max(0,700-performance.now()));
   const others=add.length-city.length;
   const ex=[city.length>8?`încă ${city.length-8} în municipiul Iași`:'',others?`${others} în restul județului`:''].filter(Boolean).join(' și ');
   const rc=zoneCard('round',city.slice(0,8),ex?`Plus ${ex}, toate pe hartă.`:'');zgrid.insertBefore(rc,zgrid.children[3]||null);window.__reveal&&window.__reveal();

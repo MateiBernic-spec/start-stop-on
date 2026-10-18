@@ -1115,6 +1115,9 @@ let tilesFailed=false;
 tl[0].on('tileerror',()=>{if(tilesFailed)return;tilesFailed=true;tl.forEach(l=>map.removeLayer(l));$('map').classList.add('schematic');$('mapfallback').hidden=false});
 const pill=k=>`<span class="pill" style="background:${ZT[k].c}">${ZT[k].pill}</span>`;
 const renderer=L.canvas({padding:.5});
+// conturul negru al străzilor stă într-un strat propriu, mereu sub culori (altfel, la readăugare, ajunge deasupra și le întunecă)
+map.createPane('casingPane').style.zIndex=390;
+const casingRenderer=L.canvas({padding:.5,pane:'casingPane'});
 const casing=L.layerGroup().addTo(map);const towns=L.layerGroup();const lines=[];
 const layers={traffic:L.layerGroup(),sig:L.layerGroup(),core:L.layerGroup(),entry:L.layerGroup(),inner:L.layerGroup(),sens:L.layerGroup(),off:L.layerGroup(),hoods:L.layerGroup()};
 Object.values(layers).forEach(l=>l.addTo(map));
@@ -1163,7 +1166,7 @@ function draw(data){
   }
   for(const k of['G','Y','R'])for(const w of groups[k]){
     const ll=w.geometry.map(p=>[p.lat,p.lon]);const wgt=/^(motorway|trunk|primary|secondary)/.test(w.tags.highway)?5:3.5;
-    if(k!=='G'||wgt>4)casing.addLayer(L.polyline(ll,{renderer,color:'#000',weight:wgt+3,opacity:.5,interactive:false}));
+    if(k!=='G'||wgt>4)casing.addLayer(L.polyline(ll,{renderer:casingRenderer,pane:'casingPane',color:'#000',weight:wgt+3,opacity:.5,interactive:false}));
     const ln=L.polyline(ll,{renderer,color:COL[k],weight:wgt,opacity:.95});ln._w=wgt;lines.push(ln);layers.traffic.addLayer(ln.bindPopup(`<b>${esc(w.tags.name||'Stradă fără nume')}</b><br><span class="pill" style="background:${COL[k]}">${LVLNAME[k]} (estimat)</span>`));
     km+=lenKm(w.geometry);
   }

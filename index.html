@@ -190,6 +190,7 @@ nav ul a:hover{color:var(--accent)}
 .mstatus{font-size:12px;color:#8FA0AA;margin-top:10px;line-height:1.4}
 .mstatus button{font:inherit;background:var(--core);color:#0b0e11;border:0;border-radius:5px;padding:4px 10px;margin-top:6px;cursor:pointer}
 .mtoggle{display:none}
+.views{display:flex;gap:6px;margin:0 0 12px}.views button{flex:1;font:600 13px var(--body);background:none;color:#E9EEF0;border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:6px 8px;cursor:pointer}.views button:hover{border-color:var(--core);color:var(--core)}
 @media (max-width:700px){
   .mpanel{top:auto;bottom:12px;left:12px;right:12px;width:auto;max-height:44%}
   .mpanel.closed>*:not(.mtoggle){display:none}
@@ -200,6 +201,7 @@ nav ul a:hover{color:var(--accent)}
 @media (max-width:700px){.mapfallback{top:12px;right:12px;left:auto;bottom:auto;max-width:220px}}
 .hood{font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:.12em;text-transform:uppercase;color:#fff;white-space:nowrap;
   text-shadow:0 0 3px #000,0 0 8px #000,0 0 14px rgba(0,0,0,.85);transform:translate(-50%,-50%);text-align:center}
+.hood.town{font-size:11px;letter-spacing:.05em}
 .pin{width:22px;height:22px;border-radius:50% 50% 50% 0;background:#fff;border:3px solid var(--accent);transform:translate(-50%,-100%) rotate(-45deg);box-shadow:0 2px 8px rgba(0,0,0,.5)}
 .leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#12171c;color:#EEF2F4;border:1px solid rgba(255,255,255,.12)}
 .leaflet-popup-content{font-family:var(--body);font-size:14px;line-height:1.45;margin:12px 14px}
@@ -308,7 +310,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
         <h1>Motorul se oprește doar acolo unde <em>aerul</em> are nevoie.</h1>
         <p class="lead">Start-Stop ON este un modul AI conectat direct la ECU-ul mașinii. Citește calitatea aerului și locul în care te afli, apoi decide singur când pornește start-stopul. Fără buton și fără opriri inutile.</p>
         <form class="search-form" id="searchForm" role="search" autocomplete="off">
-          <label class="search-label" for="q">Verifică o adresă, o stradă sau un cartier din Iași</label>
+          <label class="search-label" for="q">Verifică o adresă, o stradă sau un cartier din Iași sau din județ</label>
           <div class="search">
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
             <input id="q" name="q" type="search" list="qlist" placeholder="ex. Podu Roș, Bd. Independenței 5, Spitalul Sf. Spiridon">
@@ -337,7 +339,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
       <div class="stat"><b>7</b><span>noduri centrale</span></div>
       <div class="stat"><b>4</b><span>intrări în oraș</span></div>
       <div class="stat"><b>5</b><span>noduri și sensuri giratorii</span></div>
-      <div class="stat"><b id="statSens">…</b><span>spitale, școli și grădinițe protejate</span></div>
+      <div class="stat"><b id="statSens">…</b><span>spitale, școli și grădinițe protejate în județ</span></div>
     </div>
   </div>
 </header>
@@ -482,13 +484,14 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
 <section class="dark" id="harta" style="padding-top:0">
   <div class="wrap">
     <p class="eyebrow">Harta zonelor</p>
-    <h2>Unde ar porni start-stopul în Iași</h2>
-    <p class="lead">Străzile sunt colorate după traficul estimat la ora de vârf. Cercurile arată zonele în care Start-Stop ON pornește, forțează sau oprește start-stopul. Rezultatele căutării apar tot aici.</p>
+    <h2>Unde ar porni start-stopul în Iași și în județ</h2>
+    <p class="lead">Străzile din tot județul Iași sunt colorate după traficul estimat la ora de vârf. Butonul „Tot județul” arată harta întreagă. Cercurile arată zonele în care Start-Stop ON pornește, forțează sau oprește start-stopul. Rezultatele căutării apar tot aici.</p>
     <div class="mapbox">
       <div class="mapfallback" id="mapfallback" hidden>Imaginile din satelit nu se pot încărca pe această pagină. Zonele sunt afișate pe fundal schematic.</div>
       <div id="map" role="region" aria-label="Harta interactivă a zonelor start-stop din Iași"></div>
       <div class="mpanel" id="mpanel">
         <button class="mtoggle" id="mtoggle" type="button">Ascunde legenda</button>
+        <div class="views"><button type="button" id="viewCity">Iași</button><button type="button" id="viewCounty" hidden>Tot județul</button></div>
         <p class="t">Trafic la ora de vârf</p>
         <label class="tog"><input type="checkbox" id="tTraffic" checked><span class="ln" style="background:linear-gradient(90deg,var(--red) 33%,var(--yellow) 33% 66%,var(--green) 66%)"></span>Străzi colorate<span class="km" id="kmTot"></span></label>
         <label class="tog"><input type="checkbox" id="tSig" checked><span style="width:12px;height:12px;border-radius:50%;background:var(--red);border:2px solid #fff;flex:none;margin:0 7px"></span>Intersecții cu semafor<span class="km" id="nSig"></span></label>
@@ -498,11 +501,12 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
         <label class="tog"><input type="checkbox" id="t_inner" checked><span class="sw" style="border-color:var(--inner);background:rgba(255,111,181,.25)"></span>Noduri și giratorii</label>
         <label class="tog"><input type="checkbox" id="t_sens" checked><span class="sw" style="border-color:var(--sens);background:rgba(255,255,255,.25)"></span>Spitale și școli</label>
         <label class="tog"><input type="checkbox" id="t_off" checked><span class="sw" style="border-color:var(--off);border-style:dashed;background:rgba(156,163,175,.2)"></span>Start-stop oprit</label>
+        <label class="tog"><input type="checkbox" id="tBorder" checked><span class="ln" style="background:repeating-linear-gradient(90deg,#fff 0 6px,transparent 6px 10px)"></span>Limita județului</label>
         <label class="tog"><input type="checkbox" id="tHoods" checked><span class="sw" style="border-color:transparent"></span>Nume cartiere</label>
         <div class="mstatus" id="mstatus">Se încarcă străzile, semafoarele și instituțiile din OpenStreetMap…</div>
       </div>
     </div>
-    <p class="mapnote">Imagini satelit © Esri. Străzi, semafoare, spitale, școli și grădinițe © contribuitorii OpenStreetMap. Nivelul traficului este o estimare a situației tipice la ora de vârf (07:30–09:00 și 16:00–18:30), nu date live.</p>
+    <p class="mapnote">Imagini satelit © Esri. Străzi, semafoare, spitale, școli și grădinițe © contribuitorii OpenStreetMap. Nivelul traficului este o estimare a situației tipice la ora de vârf (07:30–09:00 și 16:00–18:30), nu date live. În afara municipiului Iași, culoarea vine doar din tipul drumului: drumurile naționale și principale sunt galbene, restul verzi.</p>
   </div>
 </section>
 
@@ -704,11 +708,15 @@ const fmt=(n,d=0)=>n.toLocaleString('ro-RO',{minimumFractionDigits:d,maximumFrac
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function hav(a,b){const R=6371000,t=Math.PI/180,dLat=(b[0]-a[0])*t,dLon=(b[1]-a[1])*t;
   const x=Math.sin(dLat/2)**2+Math.cos(a[0]*t)*Math.cos(b[0]*t)*Math.sin(dLon/2)**2;return 2*R*Math.asin(Math.sqrt(x))}
-function classify(tags){
-  const name=norm(tags.name);
-  if(name){if(RED.some(k=>name.includes(k)))return'R';if(YELLOW.some(k=>name.includes(k)))return'Y'}
+const CITY=[47.080,27.460,47.225,27.700];
+const inCity=p=>p[0]>CITY[0]&&p[0]<CITY[2]&&p[1]>CITY[1]&&p[1]<CITY[3];
+function classify(tags,mid){
   const h=(tags.highway||'').replace('_link','');
-  return(h==='trunk'||h==='primary')?'Y':'G';
+  if(!mid||inCity(mid)){
+    const name=norm(tags.name);
+    if(name){if(RED.some(k=>name.includes(k)))return'R';if(YELLOW.some(k=>name.includes(k)))return'Y'}
+  }
+  return(h==='motorway'||h==='trunk'||h==='primary')?'Y':'G';
 }
 
 /* ---------------- CALCULATOR ---------------- */
@@ -808,10 +816,10 @@ async function search(q){
   if(h){evaluate(h.c,h.n);return}
   resEl.innerHTML='<p>Caut adresa…</p>';resEl.classList.add('show');
   try{
-    const url='https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=ro&accept-language=ro&viewbox=27.46,47.225,27.70,47.08&bounded=1&q='+encodeURIComponent(q+', Iași');
-    const r=await fetch(url,{headers:{'Accept':'application/json'}});
-    const d=await r.json();
-    if(!d.length){resEl.innerHTML='<h3>Nu am găsit adresa</h3><p>Încearcă numele străzii cu număr, un cartier sau un loc cunoscut din Iași, de exemplu „Bd. Independenței 5” sau „Palas”.</p>';return}
+    const base='https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=ro&accept-language=ro&bounded=1';
+    let d=await (await fetch(base+'&viewbox=27.46,47.225,27.70,47.08&q='+encodeURIComponent(q+', Iași'),{headers:{'Accept':'application/json'}})).json();
+    if(!d.length)d=await (await fetch(base+'&viewbox=26.45,47.65,28.20,46.85&q='+encodeURIComponent(q),{headers:{'Accept':'application/json'}})).json();
+    if(!d.length){resEl.innerHTML='<h3>Nu am găsit adresa</h3><p>Încearcă numele străzii cu număr, un cartier sau o localitate din județul Iași, de exemplu „Bd. Independenței 5”, „Palas” sau „Pașcani”.</p>';return}
     const label=d[0].display_name.split(',').slice(0,3).join(',');
     evaluate([+d[0].lat,+d[0].lon],label);
   }catch(e){
@@ -848,6 +856,7 @@ let tilesFailed=false;
 tl[0].on('tileerror',()=>{if(tilesFailed)return;tilesFailed=true;tl.forEach(l=>map.removeLayer(l));$('map').classList.add('schematic');$('mapfallback').hidden=false});
 const pill=k=>`<span class="pill" style="background:${ZT[k].c}">${ZT[k].pill}</span>`;
 const renderer=L.canvas({padding:.5});
+const casing=L.layerGroup().addTo(map);const towns=L.layerGroup();const lines=[];
 const layers={traffic:L.layerGroup(),sig:L.layerGroup(),core:L.layerGroup(),entry:L.layerGroup(),inner:L.layerGroup(),sens:L.layerGroup(),off:L.layerGroup(),hoods:L.layerGroup()};
 Object.values(layers).forEach(l=>l.addTo(map));
 ZONES.forEach(z=>{
@@ -856,19 +865,29 @@ ZONES.forEach(z=>{
     .bindPopup(`<b>${z.n}</b><br>${pill(k)}<br>${z.t}`);
   layers[k].addLayer(c);circles[z.n]=c;
 });
+[{n:'Iași',c:[47.1585,27.6014]},{n:'Pașcani',c:[47.2490,26.7220]},{n:'Hârlău',c:[47.4280,26.9000]},{n:'Târgu Frumos',c:[47.2090,27.0120]},{n:'Podu Iloaiei',c:[47.2150,27.2700]}]
+  .forEach(t=>towns.addLayer(L.marker(t.c,{icon:L.divIcon({className:'',html:`<div class="hood town">${t.n}</div>`,iconSize:[0,0]}),interactive:false})));
+let lastSmall=null;
+function zoomStyle(force){
+  const small=map.getZoom()<12;if(small===lastSmall&&!force)return;lastSmall=small;
+  lines.forEach(l=>l.setStyle({weight:small?Math.max(1.5,l._w*.4):l._w}));
+  if(small){map.removeLayer(casing);if($('tHoods').checked){map.removeLayer(layers.hoods);towns.addTo(map)}}
+  else{if($('tTraffic').checked)casing.addTo(map);map.removeLayer(towns);if($('tHoods').checked)layers.hoods.addTo(map)}
+}
+map.on('zoomend',()=>zoomStyle(false));
 HOODS.forEach(h=>layers.hoods.addLayer(L.marker(h.c,{icon:L.divIcon({className:'',html:`<div class="hood">${h.n}</div>`,iconSize:[0,0]}),interactive:false})));
 
 const st=$('mstatus');
 const ENDPOINTS=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter','https://overpass.private.coffee/api/interpreter'];
 const QUERY=`[out:json][timeout:120];(way["highway"~"^(trunk|primary|secondary|tertiary)(_link)?$"](${BBOX});node["highway"="traffic_signals"](${BBOX});node["crossing"="traffic_signals"](${BBOX}););out geom;nwr["amenity"~"^(hospital|school|kindergarten)$"](${BBOX});out center tags;`;
-const CACHE_KEY='iasi-osm-v2';
+const CACHE_KEY='iasi-osm-v3';
 function clusterCount(pts,m){const used=new Uint8Array(pts.length);let n=0;
   for(let i=0;i<pts.length;i++){if(used[i])continue;n++;used[i]=1;const q=[i];
     while(q.length){const a=pts[q.pop()];for(let j=0;j<pts.length;j++)if(!used[j]&&hav(a,pts[j])<=m){used[j]=1;q.push(j)}}}
   return n}
 function lenKm(g){let d=0;for(let i=1;i<g.length;i++)d+=map.distance([g[i-1].lat,g[i-1].lon],[g[i].lat,g[i].lon]);return d/1000}
 function draw(data){
-  layers.traffic.clearLayers();layers.sig.clearLayers();layers.sens.clearLayers();sensPts.length=0;sigPts.length=0;
+  layers.traffic.clearLayers();casing.clearLayers();lines.length=0;layers.sig.clearLayers();layers.sens.clearLayers();sensPts.length=0;sigPts.length=0;
   let km=0;const cnt={hospital:0,school:0,kindergarten:0};const groups={G:[],Y:[],R:[]};
   for(const el of data.elements){
     const tags=el.tags||{};
@@ -878,22 +897,29 @@ function draw(data){
       sensPts.push({c:[lat,lon],r:s.r,name:tags.name||s.label,label:s.label,note:s.note});
       layers.sens.addLayer(L.circle([lat,lon],{radius:s.r,color:'#FFFFFF',weight:1.5,fillColor:'#FFFFFF',fillOpacity:.14})
         .bindPopup(`<b>${esc(tags.name||s.label)}</b><br>${pill('sens')}<br>${s.label}. ${s.note}`));
-    }else if(el.type==='way'&&el.geometry&&tags.highway){groups[classify(tags)].push(el)}
+    }else if(el.type==='way'&&el.geometry&&tags.highway){const g=el.geometry,m=g[g.length>>1];groups[classify(tags,[m.lat,m.lon])].push(el)}
     else if(el.type==='node'&&tags.highway==='traffic_signals'){sigPts.push([el.lat,el.lon]);
       layers.sig.addLayer(L.circleMarker([el.lat,el.lon],{renderer,radius:4,color:'#fff',weight:1.5,fillColor:'#E5383B',fillOpacity:1})
         .bindPopup('<b>Semafor</b><br>Opriri frecvente: aici motorul ar merge degeaba la ralanti.'));}
   }
   for(const k of['G','Y','R'])for(const w of groups[k]){
-    const ll=w.geometry.map(p=>[p.lat,p.lon]);const wgt=/^(trunk|primary|secondary)/.test(w.tags.highway)?5:3.5;
-    layers.traffic.addLayer(L.polyline(ll,{renderer,color:'#000',weight:wgt+3,opacity:.5,interactive:false}));
-    layers.traffic.addLayer(L.polyline(ll,{renderer,color:COL[k],weight:wgt,opacity:.95}).bindPopup(`<b>${esc(w.tags.name||'Stradă fără nume')}</b><br><span class="pill" style="background:${COL[k]}">${LVLNAME[k]} (estimat)</span>`));
+    const ll=w.geometry.map(p=>[p.lat,p.lon]);const wgt=/^(motorway|trunk|primary|secondary)/.test(w.tags.highway)?5:3.5;
+    if(k!=='G'||wgt>4)casing.addLayer(L.polyline(ll,{renderer,color:'#000',weight:wgt+3,opacity:.5,interactive:false}));
+    const ln=L.polyline(ll,{renderer,color:COL[k],weight:wgt,opacity:.95});ln._w=wgt;lines.push(ln);layers.traffic.addLayer(ln.bindPopup(`<b>${esc(w.tags.name||'Stradă fără nume')}</b><br><span class="pill" style="background:${COL[k]}">${LVLNAME[k]} (estimat)</span>`));
     km+=lenKm(w.geometry);
   }
+  zoomStyle(true);
   const total=cnt.hospital+cnt.school+cnt.kindergarten;
   const nInter=clusterCount(sigPts,40);
   $('kmTot').textContent=fmt(km)+' km';$('nSig').textContent=nInter;$('nSig').title=sigPts.length+' semafoare în '+nInter+' intersecții';$('statSens').textContent=total;
   $('sensLine').textContent=`${cnt.hospital} spitale · ${cnt.school} școli · ${cnt.kindergarten} grădinițe`;
-  st.textContent=`Gata: ${sigPts.length} semafoare în ${nInter} intersecții și ${total} instituții sensibile.`;
+  st.textContent=`Gata, tot județul Iași: ${sigPts.length} semafoare în ${nInter} intersecții și ${total} instituții sensibile.`;
+}
+let countyBounds=null;const borderLayer=L.layerGroup().addTo(map);
+function drawBorder(parts){
+  borderLayer.clearLayers();if(!parts.length)return;
+  const pl=L.polyline(parts,{renderer,color:'#FFFFFF',weight:2,opacity:.8,dashArray:'8 6',interactive:false});
+  borderLayer.addLayer(pl);countyBounds=pl.getBounds();$('viewCounty').hidden=false;
 }
 function fromStatic(j){
   // data/osm.json: {sig:[[lat,lon]], roads:[[name,highway,[[lat,lon]..]]], sens:[[amenity,name,lat,lon]]}
@@ -901,6 +927,7 @@ function fromStatic(j){
   for(const p of j.sig)els.push({type:'node',lat:p[0],lon:p[1],tags:{highway:'traffic_signals'}});
   for(const r of j.roads)els.push({type:'way',tags:{name:r[0],highway:r[1]},geometry:r[2].map(p=>({lat:p[0],lon:p[1]}))});
   for(const x of j.sens)els.push({type:'node',lat:x[2],lon:x[3],tags:{amenity:x[0],name:x[1]}});
+  drawBorder(j.border||[]);
   return {elements:els};
 }
 function failText(){
@@ -924,10 +951,14 @@ async function load(){
 }
 load();
 const bind=(id,layer)=>$(id).addEventListener('change',e=>e.target.checked?map.addLayer(layer):map.removeLayer(layer));
-bind('tTraffic',layers.traffic);bind('tSig',layers.sig);bind('tHoods',layers.hoods);
+bind('tTraffic',layers.traffic);bind('tBorder',borderLayer);bind('tSig',layers.sig);
+$('tTraffic').addEventListener('change',e=>{if(e.target.checked&&map.getZoom()>=12)casing.addTo(map);else map.removeLayer(casing)});
+$('tHoods').addEventListener('change',e=>{if(e.target.checked)(map.getZoom()<12?towns:layers.hoods).addTo(map);else{map.removeLayer(layers.hoods);map.removeLayer(towns)}});
 ['core','entry','inner','sens','off'].forEach(k=>bind('t_'+k,layers[k]));
 const mp=$('mpanel');
 $('mtoggle').onclick=()=>{mp.classList.toggle('closed');$('mtoggle').textContent=mp.classList.contains('closed')?'Arată legenda':'Ascunde legenda'};
+$('viewCity').onclick=()=>map.flyTo([47.1560,27.5850],13,{duration:.8});
+$('viewCounty').onclick=()=>countyBounds&&map.flyToBounds(countyBounds,{padding:[20,20],duration:.8});
 if(window.matchMedia('(max-width:700px)').matches){mp.classList.add('closed');$('mtoggle').textContent='Arată legenda'}
 L.DomEvent.disableClickPropagation(mp);L.DomEvent.disableScrollPropagation(mp);
 })();

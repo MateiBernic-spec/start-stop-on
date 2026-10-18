@@ -42,29 +42,3 @@ for (const el of d.elements) {
 await writeFile('data/osm.json', JSON.stringify({ built: new Date().toISOString(), sig, roads, sens }));
 console.log('signals', sig.length, 'roads', roads.length, 'sens', sens.length);
 
-// Raport de verificare pentru coordonatele zonelor
-const NOM = ['Podu Roș, Iași','Piața Unirii, Iași','Târgu Cucu, Iași','Iulius Mall, Iași','CUG, Iași','Pasajul Nicolina, Iași','Gara Iași',
-  'Tătărași, Iași','Calea Chișinăului, Iași','Lunca Cetățuii','Valea Lupului, Iași','Dancu, Holboca','Breazu, Rediu','Piața Voievozilor, Iași',
-  'Pasajul Octav Băncilă, Iași','Moara de Foc, Iași','Piața Mihai Eminescu, Iași','Bulevardul Chimiei, Iași','Bucium, Iași','Parcul Copou, Iași',
-  'Spitalul Sfântul Spiridon, Iași','Palas, Iași','Rond Gara Iași','Piața Mihai Eminescu','Rondul Podu Roș'];
-const nom = {};
-for (const q of NOM) {
-  try {
-    const r = await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=3&countrycodes=ro&q=' + encodeURIComponent(q), { headers: { 'User-Agent': UA } });
-    nom[q] = (await r.json()).map(x => ({ n: x.display_name.split(',').slice(0, 3).join(','), t: x.class + '/' + x.type, c: [R5(+x.lat), R5(+x.lon)] }));
-  } catch (e) { nom[q] = String(e); }
-  await sleep(1200);
-}
-const PAIRS = [['Cantemir','Iorga'],['Vladimirescu','Iorga'],['Vladimirescu','Cantemir'],['Târgu Cucu','Cantemir'],['Independenței','Cuza Vodă'],
-  ['Independenței','Carol'],['Nicolina','Primăverii'],['Nicolina','Poitiers'],['Nicolina','Ciurea'],['Păcurari','Octav Băncilă'],['Păcurari','Arcu'],
-  ['Silvestru','Gării'],['Chi.in.ului','Socola'],['Chi.in.ului','Vladimirescu'],['Alexandru cel Bun','Dacia'],['Moara de Foc','Socola'],
-  ['Carol','Eminescu'],['Chimiei','Chi.in.ului'],['Vladimirescu','Chi.in.ului'],['Ciurea','Lunca'],['Păcurari','Valea Lupului'],['Copou','Breazu']];
-const inter = {};
-for (const [a, b] of PAIRS) {
-  try {
-    const r = await overpass(`[out:json][timeout:60];way["highway"]["name"~"${a}",i](${BBOX})->.a;way["highway"]["name"~"${b}",i](${BBOX})->.b;node(w.a)(w.b);out;`);
-    inter[a + ' × ' + b] = r.elements.map(n => [R5(n.lat), R5(n.lon)]);
-  } catch (e) { inter[a + ' × ' + b] = String(e); }
-  await sleep(1500);
-}
-await writeFile('data/geocode-report.json', JSON.stringify({ nom, inter }, null, 1));

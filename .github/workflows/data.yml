@@ -3,6 +3,7 @@ on:
   workflow_dispatch:
   push:
     paths: ['scripts/build-data.mjs', '.github/workflows/data.yml']
+    branches: [main]
   schedule:
     - cron: '0 4 * * 1'
 permissions:
@@ -15,12 +16,13 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 20 }
       - run: |
-          mkdir -p data
+          mkdir -p data vendor
+          [ -s vendor/leaflet.min.js ] || curl -fsSL https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js -o vendor/leaflet.min.js
           node scripts/build-data.mjs > data/build-log.txt 2>&1 || echo FAILED >> data/build-log.txt
           cat data/build-log.txt
       - run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data
+          git add data vendor
           git diff --cached --quiet || git commit -m "Actualizează datele OSM pentru Iași"
           git pull --rebase && git push

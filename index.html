@@ -337,7 +337,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
       <div class="stat"><b>7</b><span>noduri centrale</span></div>
       <div class="stat"><b>4</b><span>intrări în oraș</span></div>
       <div class="stat"><b>5</b><span>noduri și sensuri giratorii</span></div>
-      <div class="stat"><b id="statSens">–</b><span>spitale, școli și grădinițe protejate</span></div>
+      <div class="stat"><b id="statSens">…</b><span>spitale, școli și grădinițe protejate</span></div>
     </div>
   </div>
 </header>
@@ -491,7 +491,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
         <button class="mtoggle" id="mtoggle" type="button">Ascunde legenda</button>
         <p class="t">Trafic la ora de vârf</p>
         <label class="tog"><input type="checkbox" id="tTraffic" checked><span class="ln" style="background:linear-gradient(90deg,var(--red) 33%,var(--yellow) 33% 66%,var(--green) 66%)"></span>Străzi colorate<span class="km" id="kmTot"></span></label>
-        <label class="tog"><input type="checkbox" id="tSig" checked><span style="width:12px;height:12px;border-radius:50%;background:var(--red);border:2px solid #fff;flex:none;margin:0 7px"></span>Semafoare<span class="km" id="nSig">–</span></label>
+        <label class="tog"><input type="checkbox" id="tSig" checked><span style="width:12px;height:12px;border-radius:50%;background:var(--red);border:2px solid #fff;flex:none;margin:0 7px"></span>Intersecții cu semafor<span class="km" id="nSig"></span></label>
         <p class="t" style="margin-top:14px">Zone start-stop</p>
         <label class="tog"><input type="checkbox" id="t_core" checked><span class="sw" style="border-color:var(--core);background:rgba(79,195,247,.25)"></span>Noduri centrale</label>
         <label class="tog"><input type="checkbox" id="t_entry" checked><span class="sw" style="border-color:var(--entry);background:rgba(179,136,255,.25)"></span>Intrări în oraș</label>
@@ -653,7 +653,8 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
   </div>
 </footer>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="vendor/leaflet.min.js"></script>
+<script>window.L||document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"><\/script>')</script>
 <script>
 (function(){
 const BBOX='47.080,27.460,47.225,27.700';
@@ -672,27 +673,27 @@ const YELLOW=['carol i','primaverii','chimiei','alexandru cel bun','dacia','moar
   'garii','silvestru','arcu','tutora','metalurgiei','bahlui','stefan cel mare','cuza voda','elena doamna','ciric','halipa',
   'galata','ciurchi','copou','pantelimon','aurel vlaicu','smardan','cantemir','sfantul andrei','eminescu','titu maiorescu','bucsinescu','cerna','octav bancila','sadoveanu'];
 const ZONES=[
-  {k:'core',n:'Podu Roș',c:[47.1538,27.5885],r:430,t:'Cel mai încărcat nod din oraș: șase direcții, cicluri de semafor lungi și coloane pe Cantemir, Nicolae Iorga și Tudor Vladimirescu.'},
-  {k:'core',n:'Piața Unirii – Independenței',c:[47.1662,27.5815],r:380,t:'Semafoare apropiate unul de altul, opriri la fiecare intersecție pe Bd. Independenței.'},
-  {k:'core',n:'Târgu Cucu',c:[47.1636,27.5915],r:300,t:'Intersecție aglomerată spre Tătărași și Podu Roș, cu așteptări de peste un minut.'},
-  {k:'core',n:'Tudor Vladimirescu – Iulius Mall',c:[47.1562,27.6045],r:420,t:'Trafic intens spre campus și mall, semafoare cu cicluri lungi.'},
-  {k:'core',n:'Nicolina – CUG',c:[47.1395,27.5665],r:460,t:'Pasajul și intersecțiile din zona CUG adună traficul din sud.'},
-  {k:'core',n:'Păcurari – Gară',c:[47.1678,27.5600],r:400,t:'Coloane pe Șos. Păcurari spre centru, plus traficul din zona gării.'},
-  {k:'core',n:'Tătărași – Calea Chișinăului',c:[47.1665,27.6170],r:450,t:'Intrarea dinspre est: coloane dimineața spre centru și seara spre ieșirea din oraș.'},
-  {k:'entry',n:'Lunca Cetățuii – Ciurea',c:[47.1240,27.5640],r:750,t:'Probabil cea mai blocată intrare din Iași: satele din sud au crescut foarte repede, iar drumul a rămas cu o bandă pe sens.'},
-  {k:'entry',n:'Valea Lupului – Păcurari',c:[47.1760,27.5180],r:650,t:'Intrarea dinspre Lețcani și Târgu Frumos. Coloane lungi dimineața spre centru.'},
-  {k:'entry',n:'Dancu – Holboca',c:[47.1560,27.6500],r:650,t:'Ieșirea spre Chișinău: camioane și navetiști, coloane în ambele sensuri la ora de vârf.'},
-  {k:'entry',n:'Rediu – Breazu',c:[47.1965,27.5575],r:450,t:'Intrarea dinspre nord spre Copou. Coloane mai mici, dar constante.'},
-  {k:'inner',n:'Rond Piața Voievozilor',c:[47.1590,27.5520],r:300,t:'Rond mare la întâlnirea Bd. Alexandru cel Bun cu Bd. Dacia.'},
-  {k:'inner',n:'Pasaj Octav Băncilă – Gară',c:[47.1712,27.5640],r:260,t:'Leagă Păcurari de centru și se umple ușor la orele de vârf.'},
-  {k:'inner',n:'Moara de Foc – Socola',c:[47.1450,27.5990],r:380,t:'Traseu ocolitor al centrului, cu semafoare dese.'},
-  {k:'inner',n:'Piața Mihai Eminescu',c:[47.1712,27.5745],r:230,t:'Începutul Copoului: aici se întâlnesc Carol I, Independenței și traficul spre universități.'},
-  {k:'inner',n:'Bd. Chimiei – zona industrială',c:[47.1505,27.6250],r:400,t:'Schimburile de tură produc vârfuri scurte, dar intense. Poziție aproximativă.'},
-  {k:'off',n:'Dealul Bucium',c:[47.1200,27.6330],r:900,t:'Traficul curge, iar aerul e mai curat. Pe pantă, repornirile dese n-ar aduce nimic.'},
-  {k:'off',n:'Parcul Copou',c:[47.1810,27.5655],r:350,t:'Aer curat lângă parc și trafic redus pe străzile din jur.'}
+  {k:'core',n:'Podu Roș',c:[47.1517,27.5878],r:430,t:'Cel mai încărcat nod din oraș: șase direcții, cicluri de semafor lungi și coloane pe Cantemir, Nicolae Iorga și Tudor Vladimirescu.'},
+  {k:'core',n:'Piața Unirii – Independenței',c:[47.1665,27.5805],r:380,t:'Semafoare apropiate unul de altul, opriri la fiecare intersecție pe Bd. Independenței.'},
+  {k:'core',n:'Târgu Cucu',c:[47.1642,27.5903],r:300,t:'Intersecție aglomerată spre Tătărași și Podu Roș, cu așteptări de peste un minut.'},
+  {k:'core',n:'Tudor Vladimirescu – Iulius Mall',c:[47.1553,27.6055],r:420,t:'Trafic intens spre campus și mall, semafoare cu cicluri lungi.'},
+  {k:'core',n:'Nicolina – CUG',c:[47.1360,27.5740],r:460,t:'Șoseaua Nicolina și intersecția cu Bd. Poitiers, în zona CUG, adună traficul din sud.'},
+  {k:'core',n:'Păcurari – Gară',c:[47.1682,27.5680],r:400,t:'Coloane pe Șos. Păcurari spre centru, plus traficul din zona gării.'},
+  {k:'core',n:'Calea Chișinăului – Tudor Vladimirescu',c:[47.1481,27.6022],r:350,t:'Intersecția unde Calea Chișinăului întâlnește Bd. Tudor Vladimirescu: traficul dinspre est spre Podu Roș și Iulius, cu coloane dimineața și seara.'},
+  {k:'entry',n:'Lunca Cetățuii – Ciurea',c:[47.1150,27.5620],r:650,t:'Probabil cea mai blocată intrare din Iași: satele din sud au crescut foarte repede, iar drumul a rămas cu o bandă pe sens.'},
+  {k:'entry',n:'Valea Lupului – Păcurari',c:[47.1728,27.5180],r:600,t:'Intrarea dinspre Lețcani și Târgu Frumos. Coloane lungi dimineața spre centru.'},
+  {k:'entry',n:'Dancu – Holboca',c:[47.1530,27.6570],r:650,t:'Ieșirea spre Chișinău: camioane și navetiști, coloane în ambele sensuri la ora de vârf.'},
+  {k:'entry',n:'Rediu – Breazu',c:[47.2140,27.5285],r:450,t:'Intrarea dinspre nord pe Șos. Copou, la ramificația spre Breazu. Coloane mai mici, dar constante.'},
+  {k:'inner',n:'Rond Piața Voievozilor',c:[47.1622,27.5625],r:260,t:'Rond mare la întâlnirea Bd. Alexandru cel Bun cu Bd. Dacia.'},
+  {k:'inner',n:'Pasaj Octav Băncilă – Gară',c:[47.1726,27.5622],r:240,t:'Leagă Păcurari de centru și se umple ușor la orele de vârf.'},
+  {k:'inner',n:'Bd. Socola',c:[47.1430,27.5975],r:300,t:'Leagă Podu Roș de Socola și Calea Chișinăului: traseu ocolitor al centrului, cu semafoare dese.'},
+  {k:'inner',n:'Piața Mihai Eminescu',c:[47.1693,27.5767],r:230,t:'Începutul Copoului: aici se întâlnesc Carol I, Independenței și traficul spre universități.'},
+  {k:'inner',n:'Bd. Chimiei – zona industrială',c:[47.1505,27.6250],r:400,t:'Schimburile de tură produc vârfuri scurte, dar intense.'},
+  {k:'off',n:'Dealul Bucium',c:[47.1215,27.6280],r:850,t:'Traficul curge, iar aerul e mai curat. Pe pantă, repornirile dese n-ar aduce nimic.'},
+  {k:'off',n:'Parcul Copou',c:[47.1790,27.5668],r:330,t:'Aer curat lângă parc și trafic redus pe străzile din jur.'}
 ];
 const HOODS=[{n:'Copou',c:[47.1835,27.5730]},{n:'Centru',c:[47.1690,27.5835]},{n:'Podu Roș',c:[47.1508,27.5905]},
-  {n:'Bucium',c:[47.1300,27.6205]},{n:'Nicolina',c:[47.1445,27.5725]},{n:'Tătărași',c:[47.1715,27.6055]}];
+  {n:'Bucium',c:[47.1300,27.6205]},{n:'Nicolina',c:[47.1445,27.5725]},{n:'Tătărași',c:[47.1640,27.6080]}];
 const SENS={hospital:{r:220,label:'Spital',note:'Start-stop forțat chiar și la trafic mediu, toată ziua.'},
             school:{r:130,label:'Școală',note:'Start-stop forțat chiar și la trafic mediu, mai ales între 07:30 și 08:15.'},
             kindergarten:{r:100,label:'Grădiniță',note:'Start-stop forțat chiar și la trafic mediu, mai ales între 07:30 și 08:15.'}};
@@ -826,7 +827,15 @@ $('geoBtn').onclick=()=>{
 };
 
 /* ---------------- HARTA ---------------- */
-if(typeof L==='undefined'){$('mstatus').textContent='Harta nu s-a putut încărca. Verifică conexiunea la internet.';return}
+if(typeof L==='undefined'){
+  $('mstatus').textContent='Harta nu s-a putut încărca. Verifică conexiunea la internet.';
+  fetch('data/osm.json').then(r=>r.json()).then(j=>{
+    const c={hospital:0,school:0,kindergarten:0};j.sens.forEach(x=>c[x[0]]++);
+    j.sig.forEach(p=>sigPts.push(p));
+    j.sens.forEach(x=>{const s=SENS[x[0]];sensPts.push({c:[x[2],x[3]],r:s.r,name:x[1]||s.label,label:s.label,note:s.note})});
+    $('statSens').textContent=j.sens.length;$('sensLine').textContent=`${c.hospital} spitale · ${c.school} școli · ${c.kindergarten} grădinițe`;
+  }).catch(()=>{$('statSens').textContent='—';$('sensLine').textContent='Instituțiile nu s-au putut încărca acum.'});
+  return}
 map=L.map('map',{preferCanvas:true,zoomControl:false,scrollWheelZoom:false}).setView([47.1560,27.5850],13);
 L.control.zoom({position:'topright'}).addTo(map);
 L.control.scale({imperial:false,position:'bottomright'}).addTo(map);
@@ -851,8 +860,12 @@ HOODS.forEach(h=>layers.hoods.addLayer(L.marker(h.c,{icon:L.divIcon({className:'
 
 const st=$('mstatus');
 const ENDPOINTS=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter','https://overpass.private.coffee/api/interpreter'];
-const QUERY=`[out:json][timeout:120];(way["highway"~"^(trunk|primary|secondary|tertiary)(_link)?$"](${BBOX});node["highway"="traffic_signals"](${BBOX}););out geom;nwr["amenity"~"^(hospital|school|kindergarten)$"](${BBOX});out center tags;`;
+const QUERY=`[out:json][timeout:120];(way["highway"~"^(trunk|primary|secondary|tertiary)(_link)?$"](${BBOX});node["highway"="traffic_signals"](${BBOX});node["crossing"="traffic_signals"](${BBOX}););out geom;nwr["amenity"~"^(hospital|school|kindergarten)$"](${BBOX});out center tags;`;
 const CACHE_KEY='iasi-osm-v2';
+function clusterCount(pts,m){const used=new Uint8Array(pts.length);let n=0;
+  for(let i=0;i<pts.length;i++){if(used[i])continue;n++;used[i]=1;const q=[i];
+    while(q.length){const a=pts[q.pop()];for(let j=0;j<pts.length;j++)if(!used[j]&&hav(a,pts[j])<=m){used[j]=1;q.push(j)}}}
+  return n}
 function lenKm(g){let d=0;for(let i=1;i<g.length;i++)d+=map.distance([g[i-1].lat,g[i-1].lon],[g[i].lat,g[i].lon]);return d/1000}
 function draw(data){
   layers.traffic.clearLayers();layers.sig.clearLayers();layers.sens.clearLayers();sensPts.length=0;sigPts.length=0;
@@ -877,20 +890,37 @@ function draw(data){
     km+=lenKm(w.geometry);
   }
   const total=cnt.hospital+cnt.school+cnt.kindergarten;
-  $('kmTot').textContent=fmt(km)+' km';$('nSig').textContent=sigPts.length;$('statSens').textContent=total;
+  const nInter=clusterCount(sigPts,40);
+  $('kmTot').textContent=fmt(km)+' km';$('nSig').textContent=nInter;$('nSig').title=sigPts.length+' semafoare în '+nInter+' intersecții';$('statSens').textContent=total;
   $('sensLine').textContent=`${cnt.hospital} spitale · ${cnt.school} școli · ${cnt.kindergarten} grădinițe`;
-  st.textContent=`Gata: ${sigPts.length} semafoare și ${total} instituții sensibile.`;
+  st.textContent=`Gata: ${sigPts.length} semafoare în ${nInter} intersecții și ${total} instituții sensibile.`;
 }
-async function load(){
-  try{const c=localStorage.getItem(CACHE_KEY);if(c){draw(JSON.parse(c));return}}catch(e){}
-  for(const ep of ENDPOINTS){
-    try{const r=await fetch(ep,{method:'POST',body:'data='+encodeURIComponent(QUERY),headers:{'Content-Type':'application/x-www-form-urlencoded'}});
-      if(!r.ok)throw new Error(r.status);const data=await r.json();draw(data);
-      try{localStorage.setItem(CACHE_KEY,JSON.stringify(data))}catch(e){}return;}catch(e){}
-  }
-  $('sensLine').textContent='Datele nu s-au putut încărca acum.';$('statSens').textContent='toate';
+function fromStatic(j){
+  // data/osm.json: {sig:[[lat,lon]], roads:[[name,highway,[[lat,lon]..]]], sens:[[amenity,name,lat,lon]]}
+  const els=[];
+  for(const p of j.sig)els.push({type:'node',lat:p[0],lon:p[1],tags:{highway:'traffic_signals'}});
+  for(const r of j.roads)els.push({type:'way',tags:{name:r[0],highway:r[1]},geometry:r[2].map(p=>({lat:p[0],lon:p[1]}))});
+  for(const x of j.sens)els.push({type:'node',lat:x[2],lon:x[3],tags:{amenity:x[0],name:x[1]}});
+  return {elements:els};
+}
+function failText(){
+  $('sensLine').textContent='Instituțiile nu s-au putut încărca acum.';
+  $('statSens').textContent='—';$('statSens').title='Datele nu s-au încărcat';
+  $('nSig').textContent='';
   st.innerHTML='Zonele propuse sunt pe hartă, dar străzile și semafoarele nu s-au putut încărca.<br><button type="button" id="retry">Încearcă din nou</button>';
   $('retry').onclick=load;
+}
+async function load(){
+  st.textContent='Se încarcă străzile, semafoarele și instituțiile…';
+  try{const r=await fetch('data/osm.json',{cache:'no-cache'});if(r.ok){draw(fromStatic(await r.json()));return}}catch(e){}
+  try{const c=localStorage.getItem(CACHE_KEY);if(c){draw(JSON.parse(c));return}}catch(e){}
+  for(const ep of ENDPOINTS){
+    try{const ctl=new AbortController();const tm=setTimeout(()=>ctl.abort(),25000);
+      const r=await fetch(ep,{method:'POST',signal:ctl.signal,body:'data='+encodeURIComponent(QUERY),headers:{'Content-Type':'application/x-www-form-urlencoded'}});
+      clearTimeout(tm);if(!r.ok)throw new Error(r.status);const data=await r.json();draw(data);
+      try{localStorage.setItem(CACHE_KEY,JSON.stringify(data))}catch(e){}return;}catch(e){}
+  }
+  failText();
 }
 load();
 const bind=(id,layer)=>$(id).addEventListener('change',e=>e.target.checked?map.addLayer(layer):map.removeLayer(layer));

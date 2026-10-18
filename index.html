@@ -987,22 +987,36 @@ $('cEngine').addEventListener('change',()=>{const o=$('cEngine').selectedOptions
 calc();
 
 /* ---------------- SIMULATOR DECIZIE ---------------- */
-function sim(){
-  const ppm=+$('sCo2').value;$('sCo2Out').textContent=ppm+' ppm';
-  const lvl=ppm>600?'HIGH':ppm>=450?'MEDIUM':'LOW';
-  const steps=[],tech=[['sBat','bateria e slabă'],['sWarm','motorul e rece'],['sClim','climatizarea are nevoie de motor'],['sFlat','mașina e în pantă']].filter(([id])=>!$(id).checked);
-  let bg,dec;
-  steps.push(`Senzorul citește ${ppm} ppm CO₂ → nivel <b>${lvl}</b> (prag: sub 450 LOW, 450–600 MEDIUM, peste 600 HIGH).`);
-  if(!$('sStop').checked){bg='#2C3E48';dec='Nimic de decis: mașina e în mers.';steps.push('Start-stopul contează doar când mașina staționează.')}
-  else if(tech.length){bg='#2C3E48';dec='ECU: blochează oprirea. Motorul rămâne pornit.';steps.push('Verificare tehnică eșuată: '+tech.join(', ')+'. Siguranța are prioritate față de poluare.')}
-  else if($('sSens').checked){bg='#13212B';dec='ECU: permite oprirea (zonă sensibilă, start-stop forțat).';steps.push('Lângă școli și spitale, motorul se oprește indiferent de nivel.')}
-  else if(lvl==='LOW'){bg='#1F8A5B';dec='ECU: blochează oprirea. Aer curat, motorul rămâne pornit.';steps.push('La LOW, confortul are prioritate: fără repornire bruscă.')}
-  else{bg=lvl==='HIGH'?'#C2332F':'#A5760C';dec='ECU: permite oprirea. Motorul se oprește la staționare.';steps.push(lvl==='HIGH'?'La HIGH, aerul din habitaclu trece și pe recirculare.':'Oprire normală la semafor.')}
-  steps.push('ECU-ul face propriile verificări și are ultimul cuvânt.');
-  $('simRes').style.background=bg;
-  $('simRes').innerHTML=`<span class="dt est" style="align-self:flex-start;color:#fff;border-color:rgba(255,255,255,.6);background:rgba(255,255,255,.1)">Simulat</span><div class="lvl">${$('sStop').checked&&!tech.length?lvl:'—'}</div><div class="dec">${dec}</div><ol>${steps.map(x=>'<li>'+x+'</li>').join('')}</ol>`;
+// Logica de decizie, separată de afișare (aceeași funcție o folosește și testul automat)
+function decide(st){
+  const lvl=st.ppm>600?'HIGH':st.ppm>=450?'MEDIUM':'LOW';
+  const recirc=lvl==='HIGH';                       // aerul din habitaclu trece pe recirculare la HIGH, indiferent de motor
+  const fails=[['bat','bateria e slabă'],['warm','motorul e rece'],['clim','climatizarea are nevoie de motor'],['flat','mașina e în pantă']].filter(([k])=>!st[k]).map(x=>x[1]);
+  if(!st.stop)return{lvl,recirc,allow:null,why:'moving',fails};
+  if(fails.length)return{lvl,recirc,allow:false,why:'tech',fails};
+  if(st.sens)return{lvl,recirc,allow:true,why:'sens',fails};
+  if(lvl==='LOW')return{lvl,recirc,allow:false,why:'low',fails};
+  return{lvl,recirc,allow:true,why:'level',fails};
 }
-['sCo2','sStop','sSens','sBat','sWarm','sClim','sFlat'].forEach(id=>$(id).addEventListener('input',sim));sim();
+window.__startStopDecide=decide;
+function sim(){
+  const st={ppm:+$('sCo2').value,stop:$('sStop').checked,sens:$('sSens').checked,bat:$('sBat').checked,warm:$('sWarm').checked,clim:$('sClim').checked,flat:$('sFlat').checked};
+  $('sCo2Out').textContent=st.ppm+' ppm';
+  const r=decide(st),steps=[];
+  steps.push(`Senzorul citește ${st.ppm} ppm CO₂ → nivel <b>${r.lvl}</b> (sub 450 LOW, 450–600 MEDIUM, peste 600 HIGH).`);
+  const LC={LOW:'#1F8A5B',MEDIUM:'#A5760C',HIGH:'#C2332F'};
+  let bg,dec;
+  if(r.why==='moving'){bg='#2C3E48';dec='Nimic de decis: mașina e în mers.';steps.push('Start-stopul contează doar când mașina staționează.')}
+  else if(r.why==='tech'){bg='#2C3E48';dec='ECU: blochează oprirea. Motorul rămâne pornit.';steps.push('Verificare tehnică eșuată: '+r.fails.join(', ')+'. Siguranța are prioritate față de poluare și față de zona sensibilă.')}
+  else if(r.why==='sens'){bg='#13212B';dec='ECU: permite oprirea (zonă sensibilă, start-stop forțat).';steps.push('Lângă școli și spitale, motorul se oprește la staționare indiferent de nivel.')}
+  else if(r.why==='low'){bg=LC.LOW;dec='ECU: blochează oprirea. Aer curat, motorul rămâne pornit.';steps.push('La LOW, confortul are prioritate: fără repornire bruscă.')}
+  else{bg=LC[r.lvl];dec='ECU: permite oprirea. Motorul se oprește la staționare.';steps.push(r.lvl==='HIGH'?'Poluare ridicată: oprire prioritară.':'Poluare moderată: oprire normală la semafor.')}
+  if(r.recirc)steps.push('Nivel HIGH: aerul din habitaclu trece pe recirculare.');
+  if(r.allow!==null)steps.push('ECU-ul face propriile verificări și are ultimul cuvânt.');
+  $('simRes').style.background=bg;
+  $('simRes').innerHTML=`<span class="dt est" style="align-self:flex-start;color:#fff;border-color:rgba(255,255,255,.6);background:rgba(255,255,255,.1)">Simulat</span><div class="lvl">${r.lvl}</div><div class="dec" data-allow="${r.allow}">${dec}</div><ol>${steps.map(x=>'<li>'+x+'</li>').join('')}</ol>`;
+}
+['sCo2','sStop','sSens','sBat','sWarm','sClim','sFlat'].forEach(id=>{$(id).addEventListener('input',sim);$(id).addEventListener('change',sim)});sim();
 
 /* ---------------- CARDURI ZONE ---------------- */
 let map=null;const circles={};const sensPts=[];const sigPts=[];
@@ -1358,7 +1372,18 @@ function draw(data){
   st.textContent=`Gata, tot județul Iași: ${sigPts.length} semafoare în ${nInter} intersecții și ${total} instituții sensibile.`;
 }
 let countyBounds=null;const borderLayer=L.layerGroup().addTo(map);
+let BORDER_SEGS=[],BORDER_BB=null,borderDone;const borderReady=new Promise(r=>borderDone=r);
+// punct-în-poligon (par-impar) pe toate segmentele conturului exterior al județului
+function inCounty(lat,lon){
+  if(!BORDER_SEGS.length)return true;
+  if(lat<BORDER_BB[0]||lat>BORDER_BB[1]||lon<BORDER_BB[2]||lon>BORDER_BB[3])return false;
+  let k=false;for(const[y1,x1,y2,x2]of BORDER_SEGS)if((y1>lat)!==(y2>lat)&&lon<(x2-x1)*(lat-y1)/(y2-y1)+x1)k=!k;
+  return k;
+}
 function drawBorder(parts){
+  BORDER_SEGS=[];let a=90,b=-90,c=180,d=-180;
+  for(const pt of parts)for(let i=1;i<pt.length;i++){const p=pt[i-1],q=pt[i];BORDER_SEGS.push([p[0],p[1],q[0],q[1]]);a=Math.min(a,p[0]);b=Math.max(b,p[0]);c=Math.min(c,p[1]);d=Math.max(d,p[1])}
+  BORDER_BB=[a,b,c,d];borderDone();
   borderLayer.clearLayers();if(!parts.length)return;
   const pl=L.polyline(parts,{renderer,color:'#FFFFFF',weight:2,opacity:.8,dashArray:'8 6',interactive:false});
   borderLayer.addLayer(pl);countyBounds=pl.getBounds();$('viewCounty').hidden=false;
@@ -1389,7 +1414,7 @@ async function load(){
       clearTimeout(tm);if(!r.ok)throw new Error(r.status);const data=await r.json();draw(data);
       try{localStorage.setItem(CACHE_KEY,JSON.stringify(data))}catch(e){}return;}catch(e){}
   }
-  failText();
+  borderDone&&borderDone();failText();
 }
 load();
 const bind=(id,layer)=>$(id).addEventListener('change',e=>e.target.checked?map.addLayer(layer):map.removeLayer(layer));
@@ -1417,9 +1442,11 @@ async function loadLive(){
     const r=await fetch('https://data.sensor.community/airrohr/v1/filter/area=47.17,27.30,75',{signal:ctl.signal});clearTimeout(tm);
     if(!r.ok)throw new Error(r.status);
     const d=await r.json(),by=new Map();
+    await Promise.race([borderReady,new Promise(r=>setTimeout(r,8000))]);
     for(const x of d){
       const v=(x.sensordatavalues||[]).find(q=>q.value_type==='P2');if(!v)continue;
       const lat=+x.location.latitude,lon=+x.location.longitude,val=+v.value;if(!isFinite(lat)||!isFinite(val)||val<0||val>500)continue;
+      if(!inCounty(lat,lon))continue;   // doar senzorii din județul Iași
       const k=x.location.id,prev=by.get(k);if(!prev||x.timestamp>prev.ts)by.set(k,{lat,lon,val,ts:x.timestamp});
     }
     liveLayer.clearLayers();

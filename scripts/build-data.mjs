@@ -64,3 +64,26 @@ for (const el of d.elements) {
 const out = JSON.stringify({ built: new Date().toISOString(), area: 'Județul Iași', sig, roads, sens, border });
 await writeFile('data/osm.json', out);
 console.log('signals', sig.length, 'roads', roads.length, 'sens', sens.length, 'border', border.length, 'bytes', out.length);
+
+// ---- Index cu toate străzile cu nume din județ, pentru căutare ----
+const QS = `[out:json][timeout:600];${A}
+way["highway"]["name"]["highway"!~"^(footway|path|cycleway|steps|bridleway|corridor|platform|proposed|construction)$"](area.c);
+out center tags;
+node["place"~"^(city|town|village|suburb|neighbourhood|quarter)$"](area.c);
+out;`;
+const ds = await overpass(QS);
+const places = ds.elements.filter(e => e.type === 'node' && e.tags?.place).map(e => ({ n: e.tags.name, t: e.tags.place, lat: e.lat, lon: e.lon })).filter(p => p.n);
+// localitatea: cel mai apropiat city/town/village; în municipii păstrăm numele orașului
+const settl = places.filter(p => /^(city|town|village)$/.test(p.t));
+const near = (lat, lon) => { let b = null, bd = 1e9; for (const p of settl) { const d = (p.lat - lat) ** 2 + ((p.lon - lon) * 0.68) ** 2; if (d < bd) { bd = d; b = p; } } return b ? b.n : ''; };
+const groups = new Map();
+for (const e of ds.elements) {
+  if (e.type !== 'way' || !e.center) continue;
+  const name = e.tags.name, loc = near(e.center.lat, e.center.lon), k = name + '|' + loc;
+  const g = groups.get(k) || { name, loc, la: 0, lo: 0, n: 0 };
+  g.la += e.center.lat; g.lo += e.center.lon; g.n++; groups.set(k, g);
+}
+const streets = [...groups.values()].map(g => [g.name, g.loc, R5(g.la / g.n), R5(g.lo / g.n)]);
+for (const p of places) streets.push([p.n, p.t, R5(p.lat), R5(p.lon)]);
+await writeFile('data/streets.json', JSON.stringify(streets));
+console.log('streets', streets.length, 'places', places.length);

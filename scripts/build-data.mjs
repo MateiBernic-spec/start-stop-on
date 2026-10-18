@@ -10,7 +10,9 @@ async function overpass(q) {
     try {
       const r = await fetch(ep, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': UA }, body: 'data=' + encodeURIComponent(q) });
       if (!r.ok) throw new Error(ep + ' ' + r.status);
-      return await r.json();
+      const j = await r.json();
+      if (j.remark && /error|timed out|runtime/i.test(j.remark)) throw new Error('remark: ' + j.remark);
+      return j;
     } catch (e) { console.error('overpass fail', e.message); await sleep(8000); }
   }
   throw new Error('Overpass indisponibil');
@@ -34,6 +36,7 @@ function simplify(pts, tol) {
   return pts.filter((_, i) => keep[i]);
 }
 const A = 'area["ISO3166-2"="RO-IS"]["admin_level"="4"]->.c;';
+try {
 const Q = `[out:json][timeout:600][maxsize:1073741824];${A}
 (node["highway"="traffic_signals"](area.c);node["crossing"="traffic_signals"](area.c););
 out;
@@ -61,29 +64,54 @@ for (const el of d.elements) {
     roads.push([t.name || t.ref || '', t.highway, g]);
   }
 }
+if (sig.length < 200 || roads.length < 1500 || sens.length < 100) throw new Error(`date incomplete: ${sig.length} semafoare, ${roads.length} drumuri, ${sens.length} instituții`);
 const out = JSON.stringify({ built: new Date().toISOString(), area: 'Județul Iași', sig, roads, sens, border });
 await writeFile('data/osm.json', out);
 console.log('signals', sig.length, 'roads', roads.length, 'sens', sens.length, 'border', border.length, 'bytes', out.length);
+} catch (e) { console.error('MAIN FAIL (păstrez datele vechi):', e.message); }
 
 // ---- Index cu toate străzile cu nume din județ, pentru căutare ----
+try {
 const QS = `[out:json][timeout:600];${A}
 way["highway"]["name"]["highway"!~"^(footway|path|cycleway|steps|bridleway|corridor|platform|proposed|construction)$"](area.c);
 out center tags;
 node["place"~"^(city|town|village|suburb|neighbourhood|quarter)$"](area.c);
-out;`;
+out;
+rel["boundary"="administrative"]["admin_level"="8"](area.c);
+out geom;`;
 const ds = await overpass(QS);
 const places = ds.elements.filter(e => e.type === 'node' && e.tags?.place).map(e => ({ n: e.tags.name, t: e.tags.place, lat: e.lat, lon: e.lon })).filter(p => p.n);
 // localitatea: cel mai apropiat city/town/village; în municipii păstrăm numele orașului
 const settl = places.filter(p => /^(city|town|village)$/.test(p.t));
 const near = (lat, lon) => { let b = null, bd = 1e9; for (const p of settl) { const d = (p.lat - lat) ** 2 + ((p.lon - lon) * 0.68) ** 2; if (d < bd) { bd = d; b = p; } } return b ? b.n : ''; };
+// comune / orașe (admin_level 8): punct-în-poligon pe segmentele conturului exterior
+const communes = ds.elements.filter(e => e.type === 'relation' && e.tags?.name).map(e => {
+  const segs = []; let a = 90, b = -90, c = 180, d = -180;
+  for (const m of e.members || []) if (m.type === 'way' && m.role !== 'inner' && m.geometry)
+    for (let i = 1; i < m.geometry.length; i++) {
+      const p = m.geometry[i - 1], q = m.geometry[i]; segs.push([p.lat, p.lon, q.lat, q.lon]);
+      a = Math.min(a, p.lat); b = Math.max(b, p.lat); c = Math.min(c, p.lon); d = Math.max(d, p.lon);
+    }
+  return { n: e.tags.name.replace(/^(Municipiul|Orașul|Oraș|Comuna)\s+/i, ''), segs, bb: [a, b, c, d] };
+});
+const inside = (cm, lat, lon) => {
+  if (lat < cm.bb[0] || lat > cm.bb[1] || lon < cm.bb[2] || lon > cm.bb[3]) return false;
+  let k = false;
+  for (const [y1, x1, y2, x2] of cm.segs) if ((y1 > lat) !== (y2 > lat) && lon < (x2 - x1) * (lat - y1) / (y2 - y1) + x1) k = !k;
+  return k;
+};
+const commune = (lat, lon) => { for (const cm of communes) if (inside(cm, lat, lon)) return cm.n; return near(lat, lon); };
+console.log('communes', communes.length);
 const groups = new Map();
 for (const e of ds.elements) {
   if (e.type !== 'way' || !e.center) continue;
-  const name = e.tags.name, loc = near(e.center.lat, e.center.lon), k = name + '|' + loc;
+  const name = e.tags.name, loc = commune(e.center.lat, e.center.lon), k = name + '|' + loc;
   const g = groups.get(k) || { name, loc, la: 0, lo: 0, n: 0 };
   g.la += e.center.lat; g.lo += e.center.lon; g.n++; groups.set(k, g);
 }
 const streets = [...groups.values()].map(g => [g.name, g.loc, R5(g.la / g.n), R5(g.lo / g.n)]);
 for (const p of places) streets.push([p.n, p.t, R5(p.lat), R5(p.lon)]);
+if (streets.length < 2000) throw new Error('index de străzi incomplet: ' + streets.length);
 await writeFile('data/streets.json', JSON.stringify(streets));
 console.log('streets', streets.length, 'places', places.length);
+} catch (e) { console.error('STREETS FAIL (păstrez indexul vechi):', e.message); }

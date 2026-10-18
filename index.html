@@ -377,7 +377,45 @@ table.ch td{padding:13px 16px;border-top:1px solid var(--line);vertical-align:to
 .btn{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:16px;text-decoration:none;border-radius:8px;padding:13px 20px;border:1.5px solid #fff;color:#fff;margin-top:28px}
 footer{padding-block:32px;font-size:14px;color:var(--muted)}
 footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
-@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.cbar .fill{transition:none}}
+/* ---------- Animații ---------- */
+:root{--ease:cubic-bezier(.22,1,.36,1)}
+/* 1. apariție la derulare: doar elementele aflate sub ecran la încărcare primesc .rv-wait (conținutul rămâne vizibil fără JS) */
+.rv-wait{opacity:0;transform:translateY(18px)}
+.rv-in{animation:rvIn .7s var(--ease) both;animation-delay:var(--rvd,0s)}
+@keyframes rvIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+/* 3. hartă: senzori live care pulsează, pane-uri care se estompează lin, traseu desenat */
+.livepin{position:relative;width:0;height:0}
+.livepin i{position:absolute;left:-8px;top:-8px;width:16px;height:16px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 3px #0E161C;background:var(--c)}
+.livepin b{position:absolute;left:-8px;top:-8px;width:16px;height:16px;border-radius:50%;border:2px solid var(--c);animation:ping 2.2s var(--ease) infinite;animation-delay:var(--d,0s)}
+@keyframes ping{0%{transform:scale(1);opacity:.9}100%{transform:scale(3);opacity:0}}
+.leaflet-pane{transition:opacity .5s var(--ease)}
+.route-draw{transition:stroke-dashoffset 1.6s var(--ease)}
+.rsig{animation:pop .45s var(--ease) both;transform-box:fill-box;transform-origin:center}
+@keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.35)}100%{transform:scale(1)}}
+.rpin{animation:pinIn .35s var(--ease) both}
+@keyframes pinIn{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
+/* 4. panoul de explicații */
+.minfo.in{animation:slideIn .45s var(--ease) both}
+.minfo.out{opacity:0;transform:translateX(16px);transition:opacity .22s,transform .22s;pointer-events:none}
+@keyframes slideIn{from{opacity:0;transform:translateX(24px) scale(.98)}to{opacity:1;transform:none}}
+@media (max-width:700px){@keyframes slideIn{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}.minfo.out{transform:translateY(16px)}}
+/* 5. simulator și rezultate */
+.simr,.cres{transition:background .5s var(--ease)}
+.swap{animation:swap .35s var(--ease)}
+@keyframes swap{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+/* 6. butoane */
+.search button,.rbtn,.chip,.ghost,.mseg button,.result button,.cres .ghost,.btn,.views button,.mtoggle,#clearRoute{transition:transform .18s var(--ease),box-shadow .18s,background .18s,color .18s,border-color .18s}
+.search button:hover,.rbtn:hover,.btn:hover,.result button:hover{transform:translateY(-2px);box-shadow:0 8px 18px rgba(15,123,108,.25)}
+.chip:hover,.ghost:hover,.cres .ghost:hover,#clearRoute:hover{transform:translateY(-1px)}
+.search button:active,.rbtn:active,.chip:active,.ghost:active,.btn:active,.result button:active,.mseg button:active,#clearRoute:active{transform:translateY(0) scale(.97)}
+.zcard li button{transition:color .18s,padding-left .18s var(--ease)}
+.zcard li button:hover{padding-left:4px}
+.stc,.bcard,.bh,.zcard,.ccol{transition:transform .25s var(--ease),box-shadow .25s}
+.stc:hover,.bcard:hover,.zcard:hover{transform:translateY(-3px);box-shadow:0 12px 28px rgba(19,33,43,.08)}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.cbar .fill{transition:none}
+  .rv-wait{opacity:1;transform:none}.rv-in,.livepin b,.rsig,.rpin,.minfo.in,.swap{animation:none!important}
+  .leaflet-pane,.route-draw,.simr,.cres,.minfo.out,.stc,.bcard,.bh,.zcard,.ccol,.zcard li button{transition:none!important}
+  .search button,.rbtn,.chip,.ghost,.mseg button,.result button,.btn,#clearRoute{transition:none!important;transform:none!important}}
 </style>
 <nav aria-label="Navigare principală">
   <div class="wrap">
@@ -947,6 +985,16 @@ const SENS={hospital:{r:220,label:'Spital',note:'Start-stop forțat chiar și la
             kindergarten:{r:100,label:'Grădiniță',note:'Start-stop forțat chiar și la trafic mediu, mai ales între 07:30 și 08:15.'}};
 
 const $=id=>document.getElementById(id);
+const REDUCE=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+// cifre care urcă lin până la valoarea nouă
+function tween(el,to,render,d=1000){
+  const from=REDUCE?to:(el._v??0);el._v=to;
+  if(REDUCE||from===to){render(to);return}
+  const t0=performance.now();cancelAnimationFrame(el._raf);
+  const step=t=>{const k=Math.min(1,(t-t0)/d),e=1-Math.pow(1-k,3);render(from+(to-from)*e);if(k<1)el._raf=requestAnimationFrame(step)};
+  el._raf=requestAnimationFrame(step);
+}
+function restartAnim(el,cls){if(REDUCE||!el)return;el.classList.remove(cls);void el.offsetWidth;el.classList.add(cls)}
 const norm=s=>(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().trim();
 const fmt=(n,d=0)=>n.toLocaleString('ro-RO',{minimumFractionDigits:d,maximumFractionDigits:d});
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -975,7 +1023,7 @@ function calc(){
   const offHoursDay=idleHoursDay*eff;
   const litersDay=offHoursDay*lph;
   const litersYear=litersDay*days*12, leiYear=litersYear*price, leiMonth=leiYear/12;
-  $('rYear').innerHTML=fmt(leiYear)+'<small>lei</small>';
+  tween($('rYear'),leiYear,v=>$('rYear').innerHTML=fmt(v)+'<small>lei</small>',600);
   $('rMonth').textContent=fmt(leiMonth)+' lei';
   $('rLiters').textContent=fmt(litersYear)+' L';
   $('rCO2').textContent=fmt(litersYear*co2f)+' kg';
@@ -1002,6 +1050,7 @@ function decide(st){
   return{lvl,recirc,allow:true,why:'level',fails};
 }
 window.__startStopDecide=decide;
+let _prevDec=null;
 function sim(){
   const st={ppm:+$('sCo2').value,stop:$('sStop').checked,sens:$('sSens').checked,bat:$('sBat').checked,warm:$('sWarm').checked,clim:$('sClim').checked,flat:$('sFlat').checked};
   $('sCo2Out').textContent=st.ppm+' ppm';
@@ -1017,8 +1066,10 @@ function sim(){
   else{bg=LC[r.lvl];dec='ECU: permite oprirea. Motorul se oprește la staționare.';steps.push(r.lvl==='HIGH'?'Poluare ridicată: oprire prioritară.':'Poluare moderată: oprire normală la semafor.')}
   if(r.recirc)steps.push('Nivel HIGH: aerul din habitaclu trece pe recirculare.');
   if(r.allow!==null)steps.push('ECU-ul face propriile verificări și are ultimul cuvânt.');
-  $('simRes').style.background=bg;
+  $('simRes').style.background=bg;const _prevLvl=$('simRes').dataset.lvl;$('simRes').dataset.lvl=r.lvl;
   $('simRes').innerHTML=`<span class="dt est" style="align-self:flex-start;color:#fff;border-color:rgba(255,255,255,.6);background:rgba(255,255,255,.1)">Simulat</span><div class="lvl">${r.lvl}</div><div class="dec" data-allow="${r.allow}">${dec}</div><ol>${steps.map(x=>'<li>'+x+'</li>').join('')}</ol>`;
+  if(_prevLvl&&_prevLvl!==r.lvl)restartAnim($('simRes').querySelector('.lvl'),'swap');
+  if(_prevDec!==dec){restartAnim($('simRes').querySelector('.dec'),'swap')}_prevDec=dec;
 }
 ['sCo2','sStop','sSens','sBat','sWarm','sClim','sFlat'].forEach(id=>{$(id).addEventListener('input',sim);$(id).addEventListener('change',sim)});sim();
 
@@ -1054,6 +1105,28 @@ sensCard.innerHTML=`<header><i style="border-color:#13212B;background:#fff"></i>
 <li><strong>Școli și grădinițe</strong><span>Mai ales între 07:30 și 08:15, când părinții opresc cu motorul pornit. Rază de 100–130 m.</span></li>
 <li><strong id="sensLine">Se încarcă din OpenStreetMap…</strong><span>În județ sunt peste 600 de unități școlare (ISJ Iași, 2023–2024) și 21 de spitale publice, plus cele private. Pe hartă apar, cu cercuri albe, cele marcate în OpenStreetMap; restul se adaugă pe măsură ce sunt cartografiate.</span></li></ul>`;
 zgrid.insertBefore(sensCard,zgrid.children[3]);
+
+/* ---------------- ANIMAȚII: apariție la derulare + cifre ---------------- */
+(function setupReveal(){
+  if(REDUCE||!('IntersectionObserver' in window))return;
+  const sel='.reason,.ccol,.step,.sensor,.lc,.ai>div,.node,.flowbox,.variant,.safety,.stc,.datakey .dk,.zcard,.bhero .bh,.ben .bcard,.phase,.rcalc>*,.calc>*,.sim>*,.tablewrap';
+  const io=new IntersectionObserver(es=>es.forEach(e=>{if(!e.isIntersecting)return;const el=e.target;io.unobserve(el);
+    el.classList.remove('rv-wait');el.classList.add('rv-in');el.addEventListener('animationend',()=>el.classList.remove('rv-in'),{once:true})}),{rootMargin:'0px 0px -6% 0px',threshold:.1});
+  window.__reveal=root=>{
+    const els=[...(root||document).querySelectorAll(sel)].filter(el=>!el._rv);
+    els.forEach(el=>{el._rv=1;if(el.getBoundingClientRect().top<innerHeight*.92)return;   // ce e deja pe ecran rămâne neatins
+      const sib=[...el.parentElement.children].filter(c=>c.matches(sel));
+      el.style.setProperty('--rvd',(Math.min(sib.indexOf(el),5)*.08).toFixed(2)+'s');el.classList.add('rv-wait');io.observe(el)});
+  };
+  window.__reveal();
+})();
+// cifrele mari din capul paginii se numără de la zero
+function countTile(b){
+  const m=(b.childNodes[0]&&b.childNodes[0].nodeType===3?b.childNodes[0].textContent:b.textContent).trim().match(/^([\d.]+)(.*)$/);if(!m)return;
+  const to=+m[1].replace(/\./g,''),suf=m[2];const node=b.childNodes[0];
+  tween(b,to,v=>{node.textContent=fmt(v)+suf},1100);
+}
+document.querySelectorAll('.stats .stat b').forEach(b=>{if(b.id!=='statRound')countTile(b)});
 
 /* ---------------- CĂUTARE ---------------- */
 /* ---------- INDEX DE STRĂZI + AUTOCOMPLETE ---------- */
@@ -1254,6 +1327,7 @@ function showRoute(rt){
     <button type="button" class="ghost" id="rShow">Arată traseul pe hartă</button>
     <div class="formula">Calcul: <code>${passed.length} semafoare × ${Math.round(pRed*100)}% roșu × ${wait} s × ${Math.round(eff*100)}% = ${fmt(idleH*3600)} s motor oprit</code>, la ${fmt(e.lph,2)} L/oră ralanti, ${fmt(f.co2,2)} kg CO₂/L ${f.name} și ${fmt(price,2)} lei/L.${rt.exact?' Traseu: OSRM, date OpenStreetMap.':' Serviciul de rute nu a răspuns, așa că distanța și semafoarele sunt estimate pe linie dreaptă.'}</div>`;
   $('rShow').onclick=()=>{scrollToMap();drawRouteOnMap(rt,true,true)};
+  {const bg=$('rRes').querySelector('.big');if(bg){const el=$('rRes');tween(el,g,v=>bg.innerHTML=fmt(v)+'<small>g</small>',700);}}
   drawRouteOnMap(rt,false);
 }
 let routeRenderer=null;
@@ -1272,12 +1346,30 @@ function drawRouteOnMap(rt,fly,info){
   routeLayer=L.layerGroup().addTo(map);
   const o={renderer:routeRenderer,pane:'routePane'};
   L.polyline(rt.line,{...o,color:'#0E161C',weight:14,opacity:.9,lineCap:'round',lineJoin:'round',interactive:false}).addTo(routeLayer);
-  L.polyline(rt.line,{...o,color:'#00E5FF',weight:8,opacity:1,lineCap:'round',lineJoin:'round',dashArray:rt.exact?null:'10 10'}).addTo(routeLayer)
+  const casingLine=routeLayer.getLayers()[0];
+  const mainLine=L.polyline(rt.line,{...o,color:'#00E5FF',weight:8,opacity:1,lineCap:'round',lineJoin:'round',dashArray:rt.exact?null:'10 10'}).addTo(routeLayer)
     .on('click',e=>{L.DomEvent.stop(e);routeInfo(rt)});
-  (rt.passed||[]).forEach(c=>L.circleMarker(c,{...o,radius:8,color:'#0E161C',weight:3,fillColor:'#FFFFFF',fillOpacity:1}).addTo(routeLayer)
+  // ordinea semafoarelor de-a lungul traseului, ca să apară pe rând
+  const along=c=>{let b=0,bd=1e12;rt.line.forEach((p,i)=>{const d=(p[0]-c[0])**2+(p[1]-c[1])**2;if(d<bd){bd=d;b=i}});return b/Math.max(1,rt.line.length-1)};
+  (rt.passed||[]).forEach(c=>L.circleMarker(c,{...o,radius:8,color:'#0E161C',weight:3,fillColor:'#FFFFFF',fillOpacity:1}).on('add',function(){this._along=along(c)}).addTo(routeLayer)
     .on('click',e=>{L.DomEvent.stop(e);showInfo({types:['osm'],title:'Semafor pe traseul tău',body:'Semaforul există în OpenStreetMap.',rule:'La roșu, dacă aerul e la MEDIUM sau HIGH, motorul se oprește: circa 12 g CO₂ salvat la 30 s.'})}));
   const pin=(c,t,bg)=>L.marker(c,{pane:'routePane',icon:L.divIcon({className:'',html:`<div style="transform:translate(-50%,-50%);width:30px;height:30px;border-radius:50%;background:${bg};border:3px solid #0E161C;color:#fff;font:800 14px var(--body);display:grid;place-items:center;box-shadow:0 0 0 3px #fff">${t}</div>`,iconSize:[0,0]})}).addTo(routeLayer);
-  pin(rt.line[0],'A','#1F8A5B');pin(rt.line[rt.line.length-1],'B','#C2332F');
+  pin(rt.line[0],'A','#1F8A5B');const pB=pin(rt.line[rt.line.length-1],'B','#C2332F');
+  // animația: după ce harta termină zoomul, linia se desenează de la A la B, semafoarele apar pe rând, apoi punctul B
+  const anim=fly&&!REDUCE,pane=map.getPane('routePane');pane.style.transition='none';pane.style.opacity=anim?0:1;
+  if(anim){
+    let done=false;
+    const start=()=>{if(done)return;done=true;
+      pane.style.opacity=1;
+      [casingLine,mainLine].forEach(l=>{const pth=l&&l._path;if(!pth)return;const L0=pth.getTotalLength();
+        pth.style.strokeDasharray=L0;pth.style.strokeDashoffset=L0;pth.getBoundingClientRect();
+        pth.classList.add('route-draw');pth.style.strokeDashoffset=0;
+        setTimeout(()=>{pth.classList.remove('route-draw');pth.style.strokeDashoffset='';pth.style.strokeDasharray=(l===mainLine&&!rt.exact)?'10 10':''},1700)});
+      routeLayer.eachLayer(l=>{if(l instanceof L.CircleMarker&&l._path&&l._along!=null){l._path.style.animationDelay=(l._along*1.4).toFixed(2)+'s';l._path.classList.add('rsig')}});
+      if(pB._icon){pB._icon.style.opacity=0;setTimeout(()=>{if(pB._icon){pB._icon.style.opacity='';pB._icon.firstElementChild.classList.add('rpin')}},1500)}
+    };
+    map.once('moveend',start);setTimeout(start,2200);   // rezervă: dacă harta nu are unde să se miște
+  }
   dimMap(true);
   if(info)routeInfo(rt);
   if(fly)setTimeout(()=>map.flyToBounds(L.latLngBounds(rt.line),{padding:[40,40],duration:.8}),450);
@@ -1327,9 +1419,9 @@ function showInfo(o){
   $('minfoBody').innerHTML=`<div style="display:flex;gap:6px;flex-wrap:wrap">${o.types.map(t=>DT[t]).join('')}</div>
     <h3>${esc(o.title)}</h3>${o.sub?`<p class="sub">${esc(o.sub)}</p>`:''}
     <p>${o.body}</p>${o.rule?`<div class="rule"><b>Ce face Start-Stop ON aici</b>${o.rule}</div>`:''}${o.note?`<p class="sub">${o.note}</p>`:''}`;
-  $('minfo').hidden=false;
+  const m=$('minfo');clearTimeout(m._t);m.classList.remove('out');m.hidden=false;restartAnim(m,'in');
 }
-function hideInfo(){$('minfo').hidden=true}
+function hideInfo(){const m=$('minfo');if(m.hidden)return;if(REDUCE){m.hidden=true;return}m.classList.remove('in');m.classList.add('out');clearTimeout(m._t);m._t=setTimeout(()=>{m.hidden=true;m.classList.remove('out')},230)}
 const ZRULE={core:'Pornește start-stopul la nivel MEDIUM și HIGH. La HIGH trece și aerul din habitaclu pe recirculare.',
   entry:'Pornește start-stopul, mai ales dimineața, în coloanele spre centru.',
   inner:'Pornește start-stopul la nivel MEDIUM și HIGH, unde semafoarele sunt dese.',
@@ -1398,10 +1490,10 @@ fetch('data/roundabouts.json').then(r=>r.json()).then(rs=>{
     c.on('click',e=>{L.DomEvent.stop(e);showInfo(zoneInfo(z))});layers.round.addLayer(c);circles[z.n]=c;
   }
   const city=add.filter(z=>z.city).sort((a,b)=>b.d-a.d);
-  $('statRound').textContent=city.length;
+  tween($('statRound'),city.length,v=>$('statRound').textContent=fmt(v),900);
   const others=add.length-city.length;
   const ex=[city.length>8?`încă ${city.length-8} în municipiul Iași`:'',others?`${others} în restul județului`:''].filter(Boolean).join(' și ');
-  zgrid.insertBefore(zoneCard('round',city.slice(0,8),ex?`Plus ${ex}, toate pe hartă.`:''),zgrid.children[3]||null);
+  const rc=zoneCard('round',city.slice(0,8),ex?`Plus ${ex}, toate pe hartă.`:'');zgrid.insertBefore(rc,zgrid.children[3]||null);window.__reveal&&window.__reveal();
 }).catch(()=>{$('statRound').textContent='—'});
 [{n:'Iași',c:[47.16156,27.58378]},{n:'Pașcani',c:[47.24808,26.72564]},{n:'Hârlău',c:[47.42783,26.90074]},{n:'Târgu Frumos',c:[47.21006,27.01366]},{n:'Podu Iloaiei',c:[47.21223,27.27366]}]
   .forEach(t=>towns.addLayer(L.marker(t.c,{icon:L.divIcon({className:'',html:`<div class="hood town">${t.n}</div>`,iconSize:[0,0]}),interactive:false})));
@@ -1536,8 +1628,7 @@ async function loadLive(){
     liveLayer.clearLayers();
     const pts=[...by.values()];
     pts.forEach(p=>{const L2=PMLVL(p.val);
-      L.circleMarker([p.lat,p.lon],{radius:10,color:'#0E161C',weight:3,fill:false,interactive:false}).addTo(liveLayer);
-      L.circleMarker([p.lat,p.lon],{radius:7,color:'#fff',weight:2,fillColor:L2.c,fillOpacity:1}).addTo(liveLayer)
+      L.marker([p.lat,p.lon],{icon:L.divIcon({className:'',html:`<div class="livepin" style="--c:${L2.c};--d:${(Math.random()*2).toFixed(2)}s"><b></b><i></i></div>`,iconSize:[0,0]})}).addTo(liveLayer)
        .on('click',e=>{L.DomEvent.stop(e);showInfo({types:['live'],title:`PM2.5: ${fmt(p.val,1)} µg/m³`,sub:`${L2.t} · măsurat la ${String(p.ts).slice(11,16)} UTC`,
          body:'Măsurătoare reală, în timp real, de la un senzor public din rețeaua Sensor.Community. Particulele fine (PM2.5) sunt o măsurătoare de sprijin: în mașină, nivelul principal vine din CO₂.',
          rule:`Pe baza acestui senzor, aerul de aici ar fi la nivel <b>${L2.l}</b>. Start-Stop ON ar folosi astfel de date publice ca să confirme citirile din mașină.`,

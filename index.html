@@ -586,7 +586,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
           <li><b>Senzori de aer live</b> pe hartă, din rețeaua publică Sensor.Community.</li>
           <li><b>Căutare</b> în circa 2.900 de străzi și 456 de localități din județ.</li>
           <li><b>Calculatorul pe traseu</b>, cu rute reale și semafoarele de pe drum, plus calculatorul lunar.</li>
-          <li><b>Algoritmul de decizie</b> LOW / MEDIUM / HIGH, cu verificările tehnice. Rulează în browser: îl poți încerca mai jos.</li>
+          <li><b>Algoritmul de decizie</b> LOW / MEDIUM / HIGH, cu prioritate pentru zonele sensibile și verificările tehnice. Rulează în browser: îl poți încerca mai jos.</li>
           <li><b>Sondajul</b> de la hackathon: 4 din 5 șoferi își opresc start-stopul.</li>
         </ul>
       </article>
@@ -996,8 +996,8 @@ function decide(st){
   const recirc=lvl==='HIGH';                       // aerul din habitaclu trece pe recirculare la HIGH, indiferent de motor
   const fails=[['bat','bateria e slabă'],['warm','motorul e rece'],['clim','climatizarea are nevoie de motor'],['flat','mașina e în pantă']].filter(([k])=>!st[k]).map(x=>x[1]);
   if(!st.stop)return{lvl,recirc,allow:null,why:'moving',fails};
+  if(st.sens)return{lvl,recirc,allow:true,why:'sens',fails};   // zona sensibilă are prioritate: start-stop forțat
   if(fails.length)return{lvl,recirc,allow:false,why:'tech',fails};
-  if(st.sens)return{lvl,recirc,allow:true,why:'sens',fails};
   if(lvl==='LOW')return{lvl,recirc,allow:false,why:'low',fails};
   return{lvl,recirc,allow:true,why:'level',fails};
 }
@@ -1010,8 +1010,9 @@ function sim(){
   const LC={LOW:'#1F8A5B',MEDIUM:'#A5760C',HIGH:'#C2332F'};
   let bg,dec;
   if(r.why==='moving'){bg='#2C3E48';dec='Nimic de decis: mașina e în mers.';steps.push('Start-stopul contează doar când mașina staționează.')}
-  else if(r.why==='tech'){bg='#2C3E48';dec='ECU: blochează oprirea. Motorul rămâne pornit.';steps.push('Verificare tehnică eșuată: '+r.fails.join(', ')+'. Siguranța are prioritate față de poluare și față de zona sensibilă.')}
-  else if(r.why==='sens'){bg='#13212B';dec='ECU: permite oprirea (zonă sensibilă, start-stop forțat).';steps.push('Lângă școli și spitale, motorul se oprește la staționare indiferent de nivel.')}
+  else if(r.why==='sens'){bg='#13212B';dec='ECU: permite oprirea (zonă sensibilă, start-stop forțat).';steps.push('Lângă școli și spitale, zona sensibilă are prioritate: motorul se oprește la staționare indiferent de nivelul de CO₂'+(r.fails.length?' și chiar dacă '+r.fails.join(', ')+'.':'.'));
+    if(r.fails.length)steps.push('În mașina reală, ECU-ul poate totuși reporni motorul imediat dacă bateria sau frâna o cer. Start-Stop ON doar cere oprirea.')}
+  else if(r.why==='tech'){bg='#2C3E48';dec='ECU: blochează oprirea. Motorul rămâne pornit.';steps.push('Verificare tehnică eșuată: '+r.fails.join(', ')+'. În afara zonelor sensibile, siguranța are prioritate față de poluare.')}
   else if(r.why==='low'){bg=LC.LOW;dec='ECU: blochează oprirea. Aer curat, motorul rămâne pornit.';steps.push('La LOW, confortul are prioritate: fără repornire bruscă.')}
   else{bg=LC[r.lvl];dec='ECU: permite oprirea. Motorul se oprește la staționare.';steps.push(r.lvl==='HIGH'?'Poluare ridicată: oprire prioritară.':'Poluare moderată: oprire normală la semafor.')}
   if(r.recirc)steps.push('Nivel HIGH: aerul din habitaclu trece pe recirculare.');
@@ -1023,8 +1024,13 @@ function sim(){
 
 /* ---------------- CARDURI ZONE ---------------- */
 let map=null;const circles={};const sensPts=[];const sigPts=[];
+function scrollToMap(){
+  const el=document.querySelector('.mapbox'),nav=document.querySelector('nav');
+  const top=el.getBoundingClientRect().top+window.scrollY-(nav?nav.offsetHeight:0)-8;
+  window.scrollTo({top:Math.max(0,top),behavior:'smooth'});
+}
 function goToZone(z){
-  document.getElementById('harta').scrollIntoView({behavior:'smooth'});
+  scrollToMap();
   if(!map)return;
   setTimeout(()=>{map.flyTo(z.c,z.r>600?14:16,{duration:.8});setTimeout(()=>showInfo(zoneInfo(z)),900)},500);
 }
@@ -1138,7 +1144,7 @@ function evaluate(pt,label){
     <h3>${esc(title)}</h3><p>${esc(text)}</p>${meta.length?`<div class="meta">${esc(meta.join(' · '))}</div>`:''}
     <button type="button" id="showOnMap">Arată pe hartă</button>`;
   resEl.classList.add('show');
-  $('showOnMap').onclick=()=>{document.getElementById('harta').scrollIntoView({behavior:'smooth'});if(map)setTimeout(()=>map.flyTo(pt,16,{duration:.8}),500)};
+  $('showOnMap').onclick=()=>{scrollToMap();if(map)setTimeout(()=>map.flyTo(pt,16,{duration:.8}),500)};
   if(map&&window.L){
     if(pinLayer)map.removeLayer(pinLayer);
     pinLayer=L.marker(pt,{icon:L.divIcon({className:'',html:'<div class="pin"></div>',iconSize:[0,0]})}).addTo(map)
@@ -1247,17 +1253,40 @@ function showRoute(rt){
     </div>
     <button type="button" class="ghost" id="rShow">Arată traseul pe hartă</button>
     <div class="formula">Calcul: <code>${passed.length} semafoare × ${Math.round(pRed*100)}% roșu × ${wait} s × ${Math.round(eff*100)}% = ${fmt(idleH*3600)} s motor oprit</code>, la ${fmt(e.lph,2)} L/oră ralanti, ${fmt(f.co2,2)} kg CO₂/L ${f.name} și ${fmt(price,2)} lei/L.${rt.exact?' Traseu: OSRM, date OpenStreetMap.':' Serviciul de rute nu a răspuns, așa că distanța și semafoarele sunt estimate pe linie dreaptă.'}</div>`;
-  $('rShow').onclick=()=>{document.getElementById('harta').scrollIntoView({behavior:'smooth'});drawRouteOnMap(rt,true)};
+  $('rShow').onclick=()=>{scrollToMap();drawRouteOnMap(rt,true,true)};
   drawRouteOnMap(rt,false);
 }
-function drawRouteOnMap(rt,fly){
+let routeRenderer=null;
+function dimMap(on){
+  // cât timp e afișat traseul, restul hărții se estompează ca traseul să iasă în evidență
+  if(typeof lines!=='undefined')lines.forEach(l=>l.setStyle({opacity:on?.28:.95}));
+  const cp=map.getPane('casingPane');if(cp)cp.style.opacity=on?.25:1;
+  const sp=map.getPane('sensPane');if(sp)sp.style.opacity=on?.1:.24;
+  ['core','entry','inner','round','off'].forEach(k=>layers[k]&&layers[k].eachLayer(c=>c.setStyle({opacity:on?.3:1,fillOpacity:on?.05:(k==='off'?.12:.2)})));
+}
+function clearRoute(){if(routeLayer){map.removeLayer(routeLayer);routeLayer=null}dimMap(false);hideInfo()}
+function drawRouteOnMap(rt,fly,info){
   if(!map||!window.L)return;
+  if(!map.getPane('routePane')){map.createPane('routePane').style.zIndex=460;routeRenderer=L.svg({pane:'routePane'})}
   if(routeLayer)map.removeLayer(routeLayer);
   routeLayer=L.layerGroup().addTo(map);
-  L.polyline(rt.line,{color:'#000',weight:9,opacity:.5,interactive:false}).addTo(routeLayer);
-  L.polyline(rt.line,{color:'#FFD166',weight:5,opacity:1,dashArray:rt.exact?null:'8 8'}).bindPopup(`<b>Traseul tău</b><br>${fmt(rt.km,1)} km · ${rt.passed.length} intersecții cu semafor`).addTo(routeLayer);
-  (rt.passed||[]).forEach(c=>L.circleMarker(c,{radius:7,color:'#13212B',weight:2,fillColor:'#FFD166',fillOpacity:1}).bindPopup('Semafor pe traseu: aici Start-Stop ON oprește motorul la roșu').addTo(routeLayer));
-  if(fly)setTimeout(()=>map.flyToBounds(L.latLngBounds(rt.line),{padding:[30,30],duration:.8}),400);
+  const o={renderer:routeRenderer,pane:'routePane'};
+  L.polyline(rt.line,{...o,color:'#0E161C',weight:14,opacity:.9,lineCap:'round',lineJoin:'round',interactive:false}).addTo(routeLayer);
+  L.polyline(rt.line,{...o,color:'#00E5FF',weight:8,opacity:1,lineCap:'round',lineJoin:'round',dashArray:rt.exact?null:'10 10'}).addTo(routeLayer)
+    .on('click',e=>{L.DomEvent.stop(e);routeInfo(rt)});
+  (rt.passed||[]).forEach(c=>L.circleMarker(c,{...o,radius:8,color:'#0E161C',weight:3,fillColor:'#FFFFFF',fillOpacity:1}).addTo(routeLayer)
+    .on('click',e=>{L.DomEvent.stop(e);showInfo({types:['osm'],title:'Semafor pe traseul tău',body:'Semaforul există în OpenStreetMap.',rule:'La roșu, dacă aerul e la MEDIUM sau HIGH, motorul se oprește: circa 12 g CO₂ salvat la 30 s.'})}));
+  const pin=(c,t,bg)=>L.marker(c,{pane:'routePane',icon:L.divIcon({className:'',html:`<div style="transform:translate(-50%,-50%);width:30px;height:30px;border-radius:50%;background:${bg};border:3px solid #0E161C;color:#fff;font:800 14px var(--body);display:grid;place-items:center;box-shadow:0 0 0 3px #fff">${t}</div>`,iconSize:[0,0]})}).addTo(routeLayer);
+  pin(rt.line[0],'A','#1F8A5B');pin(rt.line[rt.line.length-1],'B','#C2332F');
+  dimMap(true);
+  if(info)routeInfo(rt);
+  if(fly)setTimeout(()=>map.flyToBounds(L.latLngBounds(rt.line),{padding:[40,40],duration:.8}),450);
+}
+function routeInfo(rt){
+  showInfo({types:['you'],title:'Traseul tău',sub:`${fmt(rt.km,1)} km · ${rt.passed.length} intersecții cu semafor`,
+    body:`De la <b>${esc(rt.from||'A')}</b> la <b>${esc(rt.to||'B')}</b>. Linia turcoaz e traseul; punctele albe sunt semafoarele de pe el. Restul hărții e estompat cât timp traseul e afișat.`,
+    note:'<button type="button" class="ghost" id="clearRoute" style="font:600 14px var(--body);background:none;border:1.5px solid rgba(255,255,255,.5);color:#fff;border-radius:8px;padding:8px 14px;cursor:pointer;margin-top:4px">Ascunde traseul</button>'});
+  $('clearRoute').onclick=clearRoute;
 }
 $('routeForm').addEventListener('submit',async e=>{
   e.preventDefault();const btn=$('rGo');btn.disabled=true;btn.textContent='Caut traseul…';

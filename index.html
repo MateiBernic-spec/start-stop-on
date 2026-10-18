@@ -369,7 +369,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
       <div class="stat"><b>7</b><span>noduri centrale</span></div>
       <div class="stat"><b>4</b><span>intrări în oraș</span></div>
       <div class="stat"><b>5</b><span>noduri și sensuri giratorii</span></div>
-      <div class="stat"><b id="statSens">…</b><span>spitale, școli și grădinițe protejate în județ</span></div>
+      <div class="stat"><b>600+</b><span>școli și grădinițe în județ, plus 21 de spitale <span id="statSens" style="display:inline;margin:0"></span></span></div>
     </div>
   </div>
 </header>
@@ -869,7 +869,7 @@ const sensCard=document.createElement('article');sensCard.className='zcard';
 sensCard.innerHTML=`<header><i style="border-color:#13212B;background:#fff"></i><h3>Zone sensibile</h3></header><div class="rule">Start-stop forțat chiar și la trafic mediu</div>
 <ul><li><strong>Spitale</strong><span>Toată ziua, pe o rază de aproximativ 220 m.</span></li>
 <li><strong>Școli și grădinițe</strong><span>Mai ales între 07:30 și 08:15, când părinții opresc cu motorul pornit. Rază de 100–130 m.</span></li>
-<li><strong id="sensLine">Se încarcă din OpenStreetMap…</strong><span>Toate instituțiile sunt marcate pe hartă cu cercuri albe.</span></li></ul>`;
+<li><strong id="sensLine">Se încarcă din OpenStreetMap…</strong><span>În județ sunt peste 600 de unități școlare (ISJ Iași, 2023–2024) și 21 de spitale. Pe hartă apar, cu cercuri albe, cele marcate în OpenStreetMap; restul se adaugă pe măsură ce sunt cartografiate.</span></li></ul>`;
 zgrid.insertBefore(sensCard,zgrid.children[3]);
 
 /* ---------------- CĂUTARE ---------------- */
@@ -1100,8 +1100,8 @@ if(typeof L==='undefined'){
     const c={hospital:0,school:0,kindergarten:0};j.sens.forEach(x=>c[x[0]]++);
     j.sig.forEach(p=>sigPts.push(p));
     j.sens.forEach(x=>{const s=SENS[x[0]];sensPts.push({c:[x[2],x[3]],r:s.r,name:x[1]||s.label,label:s.label,note:s.note})});
-    $('statSens').textContent=j.sens.length;$('sensLine').textContent=`${c.hospital} spitale · ${c.school} școli · ${c.kindergarten} grădinițe`;
-  }).catch(()=>{$('statSens').textContent='—';$('sensLine').textContent='Instituțiile nu s-au putut încărca acum.'});
+    $('statSens').textContent=`(${j.sens.length} sunt deja pe hartă)`;$('sensLine').textContent=`Pe hartă: ${c.hospital} spitale · ${c.school} școli · ${c.kindergarten} grădinițe`;
+  }).catch(()=>{$('statSens').textContent='';$('sensLine').textContent='Instituțiile nu s-au putut încărca acum.'});
   return}
 map=L.map('map',{preferCanvas:true,zoomControl:false,scrollWheelZoom:false}).setView([47.1560,27.5850],13);
 L.control.zoom({position:'topright'}).addTo(map);
@@ -1173,8 +1173,8 @@ function draw(data){
   zoomStyle(true);
   const total=cnt.hospital+cnt.school+cnt.kindergarten;
   const nInter=clusterCount(sigPts,40);
-  $('kmTot').textContent=fmt(km)+' km';$('nSig').textContent=nInter;$('nSig').title=sigPts.length+' semafoare în '+nInter+' intersecții';$('statSens').textContent=total;
-  $('sensLine').textContent=`${cnt.hospital} spitale · ${cnt.school} școli · ${cnt.kindergarten} grădinițe`;
+  $('kmTot').textContent=fmt(km)+' km';$('nSig').textContent=nInter;$('nSig').title=sigPts.length+' semafoare în '+nInter+' intersecții';$('statSens').textContent=`(${total} sunt deja pe hartă)`;
+  $('sensLine').textContent=`Pe hartă: ${cnt.hospital} spitale · ${cnt.school} școli · ${cnt.kindergarten} grădinițe`;
   st.textContent=`Gata, tot județul Iași: ${sigPts.length} semafoare în ${nInter} intersecții și ${total} instituții sensibile.`;
 }
 let countyBounds=null;const borderLayer=L.layerGroup().addTo(map);
@@ -1194,7 +1194,7 @@ function fromStatic(j){
 }
 function failText(){
   $('sensLine').textContent='Instituțiile nu s-au putut încărca acum.';
-  $('statSens').textContent='—';$('statSens').title='Datele nu s-au încărcat';
+  $('statSens').textContent='';
   $('nSig').textContent='';
   st.innerHTML='Zonele propuse sunt pe hartă, dar străzile și semafoarele nu s-au putut încărca.<br><button type="button" id="retry">Încearcă din nou</button>';
   $('retry').onclick=load;

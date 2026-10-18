@@ -202,6 +202,7 @@ nav ul a:hover{color:var(--accent)}
 .hood{font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:.12em;text-transform:uppercase;color:#fff;white-space:nowrap;
   text-shadow:0 0 3px #000,0 0 8px #000,0 0 14px rgba(0,0,0,.85);transform:translate(-50%,-50%);text-align:center}
 .hood.town{font-size:11px;letter-spacing:.05em}
+.hood.up{transform:translate(-50%,-125%)}.hood.down{transform:translate(-50%,25%)}
 .pin{width:22px;height:22px;border-radius:50% 50% 50% 0;background:#fff;border:3px solid var(--accent);transform:translate(-50%,-100%) rotate(-45deg);box-shadow:0 2px 8px rgba(0,0,0,.5)}
 .leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#12171c;color:#EEF2F4;border:1px solid rgba(255,255,255,.12)}
 .leaflet-popup-content{font-family:var(--body);font-size:14px;line-height:1.45;margin:12px 14px}
@@ -671,7 +672,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
         </div>
         <div class="grp">
           <div class="gh"><span>Aer, în timp real</span><span class="dt live" id="liveBadge">Live</span></div>
-          <label class="tog"><input type="checkbox" id="tLive" checked><span class="livedot"></span>Senzori PM2.5<span class="km" id="nLive"></span></label>
+          <label class="tog"><input type="checkbox" id="tLive" checked><span class="livedot" style="box-shadow:0 0 0 3px #0E161C,0 0 0 5px rgba(255,255,255,.5)"></span>Senzori PM2.5<span class="km" id="nLive"></span></label>
           <label class="tog"><input type="checkbox" id="tHoods" checked><span class="sw" style="border-color:transparent"></span>Nume cartiere</label>
         </div>
         <div class="mstatus" id="mstatus">Se încarcă străzile, semafoarele și instituțiile din OpenStreetMap…</div>
@@ -937,8 +938,10 @@ const ZONES=[
   {k:'off',n:'Dealul Bucium',c:[47.1215,27.6280],r:850,t:'Traficul curge, iar aerul e mai curat. Pe pantă, repornirile dese n-ar aduce nimic.'},
   {k:'off',n:'Parcul Copou',c:[47.1790,27.5668],r:330,t:'Aer curat lângă parc și trafic redus pe străzile din jur.'}
 ];
-const HOODS=[{n:'Copou',c:[47.1835,27.5730]},{n:'Centru',c:[47.1690,27.5835]},{n:'Podu Roș',c:[47.1508,27.5905]},
-  {n:'Bucium',c:[47.1300,27.6205]},{n:'Nicolina',c:[47.1445,27.5725]},{n:'Tătărași',c:[47.1640,27.6080]}];
+// coordonate din OpenStreetMap (place=suburb/neighbourhood); Copou și Centru nu au punct OSM,
+// așa că sunt centrate pe reperele lor: Parcul Copou + Universitatea, respectiv Piața Unirii
+const HOODS=[{n:'Copou',c:[47.1790,27.5715]},{n:'Centru',c:[47.1650,27.5820]},{n:'Podu Roș',c:[47.15056,27.58651],pos:'up'},
+  {n:'Bucium',c:[47.12427,27.62225]},{n:'Nicolina',c:[47.14685,27.58387],pos:'down'},{n:'Tătărași',c:[47.16104,27.61135]}];
 const SENS={hospital:{r:220,label:'Spital',note:'Start-stop forțat chiar și la trafic mediu, toată ziua.'},
             school:{r:130,label:'Școală',note:'Start-stop forțat chiar și la trafic mediu, mai ales între 07:30 și 08:15.'},
             kindergarten:{r:100,label:'Grădiniță',note:'Start-stop forțat chiar și la trafic mediu, mai ales între 07:30 și 08:15.'}};
@@ -1278,6 +1281,7 @@ if(typeof L==='undefined'){
   }).catch(()=>{$('statSens').textContent='';$('sensLine').textContent='Instituțiile nu s-au putut încărca acum.'});
   return}
 map=L.map('map',{preferCanvas:true,zoomControl:false,scrollWheelZoom:false}).setView([47.1560,27.5850],13);
+window.__ssMap=map;
 L.control.zoom({position:'topright'}).addTo(map);
 L.control.scale({imperial:false,position:'bottomright'}).addTo(map);
 map.on('click',()=>map.scrollWheelZoom.enable());
@@ -1370,7 +1374,7 @@ fetch('data/roundabouts.json').then(r=>r.json()).then(rs=>{
   const ex=[city.length>8?`încă ${city.length-8} în municipiul Iași`:'',others?`${others} în restul județului`:''].filter(Boolean).join(' și ');
   zgrid.insertBefore(zoneCard('round',city.slice(0,8),ex?`Plus ${ex}, toate pe hartă.`:''),zgrid.children[3]||null);
 }).catch(()=>{$('statRound').textContent='—'});
-[{n:'Iași',c:[47.1585,27.6014]},{n:'Pașcani',c:[47.2490,26.7220]},{n:'Hârlău',c:[47.4280,26.9000]},{n:'Târgu Frumos',c:[47.2090,27.0120]},{n:'Podu Iloaiei',c:[47.2150,27.2700]}]
+[{n:'Iași',c:[47.16156,27.58378]},{n:'Pașcani',c:[47.24808,26.72564]},{n:'Hârlău',c:[47.42783,26.90074]},{n:'Târgu Frumos',c:[47.21006,27.01366]},{n:'Podu Iloaiei',c:[47.21223,27.27366]}]
   .forEach(t=>towns.addLayer(L.marker(t.c,{icon:L.divIcon({className:'',html:`<div class="hood town">${t.n}</div>`,iconSize:[0,0]}),interactive:false})));
 let lastSmall=null;
 function zoomStyle(force){
@@ -1380,7 +1384,7 @@ function zoomStyle(force){
   else{if($('tTraffic').checked)casing.addTo(map);map.removeLayer(towns);if($('tHoods').checked)layers.hoods.addTo(map)}
 }
 map.on('zoomend',()=>zoomStyle(false));
-HOODS.forEach(h=>layers.hoods.addLayer(L.marker(h.c,{icon:L.divIcon({className:'',html:`<div class="hood">${h.n}</div>`,iconSize:[0,0]}),interactive:false})));
+HOODS.forEach(h=>layers.hoods.addLayer(L.marker(h.c,{icon:L.divIcon({className:'',html:`<div class="hood${h.pos?' '+h.pos:''}">${h.n}</div>`,iconSize:[0,0]}),interactive:false})));
 
 const st=$('mstatus');
 const ENDPOINTS=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter','https://overpass.private.coffee/api/interpreter'];
@@ -1503,6 +1507,7 @@ async function loadLive(){
     liveLayer.clearLayers();
     const pts=[...by.values()];
     pts.forEach(p=>{const L2=PMLVL(p.val);
+      L.circleMarker([p.lat,p.lon],{radius:10,color:'#0E161C',weight:3,fill:false,interactive:false}).addTo(liveLayer);
       L.circleMarker([p.lat,p.lon],{radius:7,color:'#fff',weight:2,fillColor:L2.c,fillOpacity:1}).addTo(liveLayer)
        .on('click',e=>{L.DomEvent.stop(e);showInfo({types:['live'],title:`PM2.5: ${fmt(p.val,1)} µg/m³`,sub:`${L2.t} · măsurat la ${String(p.ts).slice(11,16)} UTC`,
          body:'Măsurătoare reală, în timp real, de la un senzor public din rețeaua Sensor.Community. Particulele fine (PM2.5) sunt o măsurătoare de sprijin: în mașină, nivelul principal vine din CO₂.',

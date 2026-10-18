@@ -569,12 +569,12 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
           <label for="rEngine">Motorizare</label>
           <select id="rEngine">
             <option value="0.6" data-f="b">Benzină, până la 1.4 L</option>
-            <option value="0.8" data-f="b" selected>Benzină, 1.5–2.0 L (ex. Duster TCe)</option>
+            <option value="0.62" data-f="b" selected>Benzină, 1.5–2.0 L (ex. Duster TCe: 12 g CO₂ / 30 s)</option>
             <option value="1.2" data-f="b">Benzină, peste 2.0 L / SUV</option>
             <option value="0.6" data-f="d">Motorină, până la 2.0 L (ex. Duster dCi)</option>
             <option value="0.9" data-f="d">Motorină, peste 2.0 L / SUV</option>
           </select>
-          <span class="hint" id="rEngHint">Ralanti: 0,8 L/oră · benzină 10,20 lei/L</span>
+          <span class="hint" id="rEngHint">Ralanti: 0,62 L/oră · benzină 10,20 lei/L</span>
         </div>
         <div class="field">
           <label for="rDays">Zile pe an cu acest drum</label>
@@ -632,12 +632,12 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
           <label for="cEngine">Motorizare</label>
           <select id="cEngine">
             <option value="0.6">Benzină, până la 1.4 L</option>
-            <option value="0.8" selected>Benzină, 1.5–2.0 L</option>
+            <option value="0.62" selected>Benzină, 1.5–2.0 L (ex. Duster)</option>
             <option value="1.2">Benzină, peste 2.0 L / SUV</option>
             <option value="0.6">Diesel, până la 2.0 L</option>
             <option value="0.9">Diesel, peste 2.0 L / SUV</option>
           </select>
-          <span class="hint" id="idleHint">Consum la ralanti: 0,8 L/oră</span>
+          <span class="hint" id="idleHint">Consum la ralanti: 0,62 L/oră</span>
         </div>
         <div class="field full">
           <label for="cCity">Cât din drum e prin oraș</label>
@@ -702,10 +702,10 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
         <ul><li>Motorul nu mai arde combustibil degeaba la semafor.</li><li>Mașinile cu start-stop din fabrică au demaror și baterie (AGM sau EFB) făcute pentru porniri dese.</li><li>ECU-ul blochează oprirea dacă bateria sau motorul nu permit.</li></ul>
       </div>
       <div class="bh" style="background:#13212B">
-        <span class="num">255 lei / an</span>
+        <span class="num">≈ 200 lei / an</span>
         <h3>Bani economisiți la fiecare semafor</h3>
-        <p>Doar din 15 opriri de 30 s pe zi, 250 de zile pe an: <b>25 L de benzină</b> (255 lei la 10,20 lei/L) sau <b>19 L de motorină</b> (204 lei la 10,90 lei/L).</p>
-        <ul><li>Pe traseul tău exact: calculatorul de mai sus.</li><li>Pentru cei 30.000 de șoferi care îl opresc azi: <b>6,9 mil. lei</b> pe an.</li></ul>
+        <p>Un Duster salvează 12 g CO₂ la fiecare oprire de 30 s, adică 180 g pe zi la 15 semafoare. Pe 250 de zile: <b>19,5 L de benzină</b> (199 lei la 10,20 lei/L) sau <b>16,8 L de motorină</b> (183 lei la 10,90 lei/L).</p>
+        <ul><li>Pe traseul tău exact: calculatorul de mai sus.</li><li>Pentru cei 30.000 de șoferi care îl opresc azi: <b>5,7 mil. lei</b> și <b>1.350 t CO₂</b> pe an.</li></ul>
       </div>
     </div>
     <div class="ben two">
@@ -826,7 +826,7 @@ function calc(){
   const lph=+$('cEngine').value, city=+$('cCity').value/100, idle10=Math.max(0,+$('cIdle').value||0), eff=Math.min(100,Math.max(0,+$('cEff').value||0))/100;
   const co2f=+$('cFuel').value;
   $('cCityOut').textContent=Math.round(city*100)+'%';
-  $('idleHint').textContent='Consum la ralanti: '+fmt(lph,1)+' L/oră';
+  $('idleHint').textContent='Consum la ralanti: '+fmt(lph,2)+' L/oră';
   const cityKmDay=km*city;
   const idleHoursDay=cityKmDay/10*idle10/60;
   const offHoursDay=idleHoursDay*eff;
@@ -1002,7 +1002,7 @@ let routeLayer=null,lastRoute=null;
 attachSuggest($('rFrom'),$('rFromSugg'));attachSuggest($('rTo'),$('rToSugg'));
 function rEngine(){const o=$('rEngine').selectedOptions[0];return{lph:+o.value,f:o.dataset.f}}
 function rPrice(f){return Math.max(0,+(f==='d'?$('rPd'):$('rPb')).value||0)}
-function updEngHint(){const e=rEngine();$('rEngHint').textContent=`Ralanti: ${fmt(e.lph,1)} L/oră · ${FUEL[e.f].name} ${fmt(rPrice(e.f),2)} lei/L`}
+function updEngHint(){const e=rEngine();$('rEngHint').textContent=`Ralanti: ${fmt(e.lph,2)} L/oră · ${FUEL[e.f].name} ${fmt(rPrice(e.f),2)} lei/L`}
 $('rEngine').addEventListener('change',()=>{updEngHint();lastRoute&&showRoute(lastRoute)});
 ['rDays','rBack','rRed','rWait','rPb','rPd'].forEach(id=>$(id).addEventListener('input',()=>{updEngHint();lastRoute&&showRoute(lastRoute)}));
 updEngHint();
@@ -1069,7 +1069,7 @@ function showRoute(rt){
       <div><b>${fmt(idleH*yr,1)} h</b><span>motor oprit la semafor</span></div>
     </div>
     <button type="button" class="ghost" id="rShow">Arată traseul pe hartă</button>
-    <div class="formula">Calcul: <code>${passed.length} semafoare × ${Math.round(pRed*100)}% roșu × ${wait} s × ${Math.round(eff*100)}% = ${fmt(idleH*3600)} s motor oprit</code>, la ${fmt(e.lph,1)} L/oră ralanti, ${fmt(f.co2,2)} kg CO₂/L ${f.name} și ${fmt(price,2)} lei/L.${rt.exact?' Traseu: OSRM, date OpenStreetMap.':' Serviciul de rute nu a răspuns, așa că distanța și semafoarele sunt estimate pe linie dreaptă.'}</div>`;
+    <div class="formula">Calcul: <code>${passed.length} semafoare × ${Math.round(pRed*100)}% roșu × ${wait} s × ${Math.round(eff*100)}% = ${fmt(idleH*3600)} s motor oprit</code>, la ${fmt(e.lph,2)} L/oră ralanti, ${fmt(f.co2,2)} kg CO₂/L ${f.name} și ${fmt(price,2)} lei/L.${rt.exact?' Traseu: OSRM, date OpenStreetMap.':' Serviciul de rute nu a răspuns, așa că distanța și semafoarele sunt estimate pe linie dreaptă.'}</div>`;
   $('rShow').onclick=()=>{document.getElementById('harta').scrollIntoView({behavior:'smooth'});drawRouteOnMap(rt,true)};
   drawRouteOnMap(rt,false);
 }

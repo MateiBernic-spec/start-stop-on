@@ -429,7 +429,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
     <div class="stats">
       <div class="stat"><b>7</b><span>noduri centrale</span></div>
       <div class="stat"><b>4</b><span>intrări în oraș</span></div>
-      <div class="stat"><b>5</b><span>noduri și sensuri giratorii</span></div>
+      <div class="stat"><b id="statRound">…</b><span>sensuri giratorii reale + 3 noduri</span></div>
       <div class="stat"><b>600+</b><span>școli și grădinițe în județ, plus spitalele (21 publice) <span id="statSens" style="display:inline;margin:0"></span></span></div>
     </div>
   </div>
@@ -658,7 +658,8 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
           <div class="two">
             <label class="tog"><input type="checkbox" id="t_core" checked><span class="sw" style="border-color:var(--core);border-style:dashed;background:rgba(79,195,247,.25)"></span>Centrale</label>
             <label class="tog"><input type="checkbox" id="t_entry" checked><span class="sw" style="border-color:var(--entry);border-style:dashed;background:rgba(179,136,255,.25)"></span>Intrări</label>
-            <label class="tog"><input type="checkbox" id="t_inner" checked><span class="sw" style="border-color:var(--inner);border-style:dashed;background:rgba(255,111,181,.25)"></span>Giratorii</label>
+            <label class="tog"><input type="checkbox" id="t_inner" checked><span class="sw" style="border-color:var(--inner);border-style:dashed;background:rgba(255,111,181,.25)"></span>Noduri</label>
+            <label class="tog"><input type="checkbox" id="t_round" checked><span class="sw" style="border-color:#FF9F43;border-style:dashed;background:rgba(255,159,67,.25)"></span>Giratorii</label>
             <label class="tog"><input type="checkbox" id="t_off" checked><span class="sw" style="border-color:var(--off);border-style:dashed;background:rgba(156,163,175,.2)"></span>Oprit</label>
           </div>
         </div>
@@ -908,7 +909,8 @@ const LVLNAME={R:'Trafic mare',Y:'Trafic mediu',G:'Trafic redus'};
 const ZT={
   core:{c:'#4FC3F7',name:'Noduri centrale',pill:'Zonă optimă start-stop',rule:'Start-stop activ la MEDIUM și HIGH'},
   entry:{c:'#B388FF',name:'Intrări în oraș',pill:'Intrare în oraș · start-stop activ',rule:'Start-stop activ, mai ales dimineața spre centru'},
-  inner:{c:'#FF6FB5',name:'Noduri și sensuri giratorii',pill:'Nod interior · start-stop activ',rule:'Start-stop activ la MEDIUM și HIGH'},
+  inner:{c:'#FF6FB5',name:'Noduri interioare',pill:'Nod interior · start-stop activ',rule:'Start-stop activ la MEDIUM și HIGH'},
+  round:{c:'#FF9F43',name:'Sensuri giratorii',pill:'Sens giratoriu · start-stop activ',rule:'Start-stop activ la MEDIUM și HIGH, la intrarea în giratoriu'},
   sens:{c:'#FFFFFF',name:'Zone sensibile',pill:'Zonă sensibilă · start-stop forțat'},
   off:{c:'#9CA3AF',name:'Start-stop oprit',pill:'Start-stop oprit (nivel LOW)',rule:'Start-stop oprit: aer curat, trafic fluid'}
 };
@@ -929,10 +931,8 @@ const ZONES=[
   {k:'entry',n:'Valea Lupului – Păcurari',c:[47.1728,27.5180],r:600,t:'Intrarea dinspre Lețcani și Târgu Frumos. Coloane lungi dimineața spre centru.'},
   {k:'entry',n:'Dancu – Holboca',c:[47.1530,27.6570],r:650,t:'Ieșirea spre Chișinău: camioane și navetiști, coloane în ambele sensuri la ora de vârf.'},
   {k:'entry',n:'Rediu – Breazu',c:[47.2140,27.5285],r:450,t:'Intrarea dinspre nord pe Șos. Copou, la ramificația spre Breazu. Coloane mai mici, dar constante.'},
-  {k:'inner',n:'Rond Piața Voievozilor',c:[47.1622,27.5625],r:260,t:'Rond mare la întâlnirea Bd. Alexandru cel Bun cu Bd. Dacia.'},
   {k:'inner',n:'Pasaj Octav Băncilă – Gară',c:[47.1726,27.5622],r:240,t:'Leagă Păcurari de centru și se umple ușor la orele de vârf.'},
   {k:'inner',n:'Bd. Socola',c:[47.1430,27.5975],r:300,t:'Leagă Podu Roș de Socola și Calea Chișinăului: traseu ocolitor al centrului, cu semafoare dese.'},
-  {k:'inner',n:'Piața Mihai Eminescu',c:[47.1693,27.5767],r:230,t:'Începutul Copoului: aici se întâlnesc Carol I, Independenței și traficul spre universități.'},
   {k:'inner',n:'Bd. Chimiei – zona industrială',c:[47.1505,27.6250],r:400,t:'Schimburile de tură produc vârfuri scurte, dar intense.'},
   {k:'off',n:'Dealul Bucium',c:[47.1215,27.6280],r:850,t:'Traficul curge, iar aerul e mai curat. Pe pantă, repornirile dese n-ar aduce nimic.'},
   {k:'off',n:'Parcul Copou',c:[47.1790,27.5668],r:330,t:'Aer curat lângă parc și trafic redus pe străzile din jur.'}
@@ -1026,17 +1026,19 @@ function goToZone(z){
   setTimeout(()=>{map.flyTo(z.c,z.r>600?14:16,{duration:.8});setTimeout(()=>showInfo(zoneInfo(z)),900)},500);
 }
 const zgrid=$('zgrid');
-['core','entry','inner','off'].forEach(k=>{
+function zoneCard(k,list,extra){
   const card=document.createElement('article');card.className='zcard';
   card.innerHTML=`<header><i style="border-color:${ZT[k].c};background:${ZT[k].c}55"></i><h3>${ZT[k].name}</h3></header><div class="rule">${ZT[k].rule}</div><ul></ul>`;
   const ul=card.querySelector('ul');
-  ZONES.filter(z=>z.k===k).forEach(z=>{
+  list.forEach(z=>{
     const li=document.createElement('li');
     const b=document.createElement('button');b.type='button';b.textContent=z.n;b.onclick=()=>goToZone(z);
-    const s=document.createElement('span');s.textContent=z.t;li.append(b,s);ul.appendChild(li);
+    const s=document.createElement('span');s.textContent=z.short||z.t;li.append(b,s);ul.appendChild(li);
   });
-  zgrid.appendChild(card);
-});
+  if(extra){const li=document.createElement('li');li.innerHTML=`<span>${extra}</span>`;ul.appendChild(li)}
+  return card;
+}
+['core','entry','inner','off'].forEach(k=>zgrid.appendChild(zoneCard(k,ZONES.filter(z=>z.k===k))));
 const sensCard=document.createElement('article');sensCard.className='zcard';
 sensCard.innerHTML=`<header><i style="border-color:#13212B;background:#fff"></i><h3>Zone sensibile</h3></header><div class="rule">Start-stop forțat chiar și la trafic mediu</div>
 <ul><li><strong>Spitale</strong><span>Toată ziua, pe o rază de aproximativ 220 m.</span></li>
@@ -1121,7 +1123,7 @@ function evaluate(pt,label){
   const act=inside.find(x=>x.z.k!=='off'), off=inside.find(x=>x.z.k==='off');
   if(sensHit){tag='Forțat';color='#13212B';title=`Zonă sensibilă: ${sensHit.name}`;
     text=`Ești lângă ${sensHit.label.toLowerCase()}. Start-Stop ON oprește motorul la staționare chiar și la trafic mediu. ${sensHit.note}`}
-  else if(act){const z=act.z;tag='Activ';color=z.k==='entry'?'#7C4DDB':z.k==='inner'?'#C2407F':'#1E88B8';
+  else if(act){const z=act.z;tag='Activ';color=z.k==='entry'?'#7C4DDB':z.k==='inner'?'#C2407F':z.k==='round'?'#C46A12':'#1E88B8';
     title=`${ZT[z.k].name}: ${z.n}`;text=`${z.t} Start-Stop ON pornește start-stopul la nivel MEDIUM și HIGH.`}
   else if(off){tag='Oprit';color='#56656F';title=`Aer curat: ${off.z.n}`;text=`${off.z.t} Start-Stop ON ține start-stopul oprit (nivel LOW).`}
   else{tag='Adaptiv';color='#0F7B6C';title='În afara zonelor propuse';
@@ -1298,8 +1300,9 @@ function hideInfo(){$('minfo').hidden=true}
 const ZRULE={core:'Pornește start-stopul la nivel MEDIUM și HIGH. La HIGH trece și aerul din habitaclu pe recirculare.',
   entry:'Pornește start-stopul, mai ales dimineața, în coloanele spre centru.',
   inner:'Pornește start-stopul la nivel MEDIUM și HIGH, unde semafoarele sunt dese.',
+  round:'Pornește start-stopul la nivel MEDIUM și HIGH: la intrarea în giratoriu mașinile așteaptă des, cu motorul la ralanti.',
   off:'Ține start-stopul oprit (nivel LOW): aerul e curat, iar motorul rămâne pornit pentru confort.'};
-function zoneInfo(z){return{types:['est'],title:z.n,sub:ZT[z.k].name+' · rază '+fmt(z.r)+' m',body:esc(z.t)+' Zona e o propunere a echipei, desenată pe baza traficului tipic, nu o măsurătoare.',rule:ZRULE[z.k]}}
+function zoneInfo(z){if(z.k==='round')return{types:['osm','est'],title:z.n,sub:'sens giratoriu · diametru ≈ '+fmt(z.d)+' m',body:esc(z.t)+' Poziția și mărimea sunt reale (OpenStreetMap). Raza zonei din jur e o propunere a echipei.',rule:ZRULE.round};return{types:['est'],title:z.n,sub:ZT[z.k].name+' · rază '+fmt(z.r)+' m',body:esc(z.t)+' Zona e o propunere a echipei, desenată pe baza traficului tipic, nu o măsurătoare.',rule:ZRULE[z.k]}}
 function roadInfo(w,k){
   const n=w.tags.name||'Stradă fără nume',h=(w.tags.highway||'').replace('_link','');
   const tip={motorway:'autostradă',trunk:'drum național',primary:'drum principal',secondary:'drum secundar',tertiary:'drum local',residential:'stradă rezidențială',unclassified:'drum local',living_street:'stradă rezidențială'}[h]||h;
@@ -1339,7 +1342,7 @@ function sensGroupInfo(g,r){
     rule:'Start-stop forțat chiar și la trafic mediu. '+(hosp?'Lângă spital: toată ziua.':'Mai ales între 07:30 și 08:15, când părinții opresc cu motorul pornit.')};
 }
 const casing=L.layerGroup().addTo(map);const towns=L.layerGroup();const lines=[];
-const layers={traffic:L.layerGroup(),sig:L.layerGroup(),core:L.layerGroup(),entry:L.layerGroup(),inner:L.layerGroup(),sens:L.layerGroup(),off:L.layerGroup(),hoods:L.layerGroup()};
+const layers={traffic:L.layerGroup(),sig:L.layerGroup(),core:L.layerGroup(),entry:L.layerGroup(),inner:L.layerGroup(),round:L.layerGroup(),sens:L.layerGroup(),off:L.layerGroup(),hoods:L.layerGroup()};
 Object.values(layers).forEach(l=>l.addTo(map));
 ZONES.forEach(z=>{
   const k=z.k;
@@ -1347,6 +1350,26 @@ ZONES.forEach(z=>{
   c.on('click',e=>{L.DomEvent.stop(e);showInfo(zoneInfo(z))});
   layers[k].addLayer(c);circles[z.n]=c;
 });
+/* ---------- SENSURI GIRATORII REALE (OSM) ---------- */
+const short=n=>n.replace(/^(Strada|Bulevardul|Șoseaua|Calea|Aleea|Splaiul|Piața|Intrarea|Drumul)\s+/,'').replace(/^(Str\.|Bd\.|Șos\.)\s*/,'');
+fetch('data/roundabouts.json').then(r=>r.json()).then(rs=>{
+  const add=[];
+  for(let [nm,streets,lat,lon,rad,hw] of rs){
+    streets=[...streets].sort((a,b)=>(/^(DN|DJ|DC)\s?\d/.test(a)?1:0)-(/^(DN|DJ|DC)\s?\d/.test(b)?1:0)).filter(x=>!x.includes(';'));
+    const st=streets.map(short);
+    const n=nm?nm:(st.length>=2?`Giratoriu ${st[0]} – ${st[1]}`:st.length?`Giratoriu ${st[0]}`:'Sens giratoriu');
+    const z={k:'round',n,c:[lat,lon],r:Math.max(140,rad+100),d:rad*2,city:inCity([lat,lon]),
+      t:streets.length?`Aici se întâlnesc ${streets.join(', ')}.`:'Sens giratoriu pe un drum principal.',short:streets.length?st.join(' · '):''};
+    add.push(z);ZONES.push(z);
+    const c=L.circle(z.c,{radius:z.r,color:ZT.round.c,weight:2.5,dashArray:'7 6',fillColor:ZT.round.c,fillOpacity:.2});
+    c.on('click',e=>{L.DomEvent.stop(e);showInfo(zoneInfo(z))});layers.round.addLayer(c);circles[z.n]=c;
+  }
+  const city=add.filter(z=>z.city).sort((a,b)=>b.d-a.d);
+  $('statRound').textContent=city.length;
+  const others=add.length-city.length;
+  const ex=[city.length>8?`încă ${city.length-8} în municipiul Iași`:'',others?`${others} în restul județului`:''].filter(Boolean).join(' și ');
+  zgrid.insertBefore(zoneCard('round',city.slice(0,8),ex?`Plus ${ex}, toate pe hartă.`:''),zgrid.children[3]||null);
+}).catch(()=>{$('statRound').textContent='—'});
 [{n:'Iași',c:[47.1585,27.6014]},{n:'Pașcani',c:[47.2490,26.7220]},{n:'Hârlău',c:[47.4280,26.9000]},{n:'Târgu Frumos',c:[47.2090,27.0120]},{n:'Podu Iloaiei',c:[47.2150,27.2700]}]
   .forEach(t=>towns.addLayer(L.marker(t.c,{icon:L.divIcon({className:'',html:`<div class="hood town">${t.n}</div>`,iconSize:[0,0]}),interactive:false})));
 let lastSmall=null;
@@ -1449,7 +1472,7 @@ const bind=(id,layer)=>$(id).addEventListener('change',e=>e.target.checked?map.a
 bind('tTraffic',layers.traffic);bind('tBorder',borderLayer);bind('tSig',layers.sig);
 $('tTraffic').addEventListener('change',e=>{if(e.target.checked&&map.getZoom()>=12)casing.addTo(map);else map.removeLayer(casing)});
 $('tHoods').addEventListener('change',e=>{if(e.target.checked)(map.getZoom()<12?towns:layers.hoods).addTo(map);else{map.removeLayer(layers.hoods);map.removeLayer(towns)}});
-['core','entry','inner','sens','off'].forEach(k=>bind('t_'+k,layers[k]));
+['core','entry','inner','round','sens','off'].forEach(k=>bind('t_'+k,layers[k]));
 const mp=$('mpanel');
 $('mtoggle').onclick=()=>{mp.classList.toggle('closed');$('mtoggle').textContent=mp.classList.contains('closed')?'Arată legenda':'Ascunde legenda'};
 $('viewCity').onclick=()=>map.flyTo([47.1560,27.5850],13,{duration:.8});

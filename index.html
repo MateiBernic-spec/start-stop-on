@@ -180,7 +180,7 @@ nav ul a:hover{color:var(--accent)}
 .mapbox{position:relative;margin-top:16px;border-radius:14px;overflow:hidden;border:1px solid var(--night-line);height:min(84vh,820px);min-height:540px}
 #map{position:absolute;inset:0;background:#0b0e11}
 .mpanel{position:absolute;top:12px;left:12px;z-index:1000;width:248px;max-height:calc(100% - 24px);overflow:auto;background:rgba(14,22,28,.93);
-  border:1px solid var(--night-line);border-radius:10px;padding:14px;font-size:14px;backdrop-filter:blur(6px)}
+  border:1px solid var(--night-line);border-radius:10px;padding:14px;font-size:14px}
 .mpanel .t{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8FA0AA;margin:0 0 8px}
 .tog{display:flex;align-items:center;gap:10px;margin:7px 0;cursor:pointer;line-height:1.3}
 .tog input{width:16px;height:16px;accent-color:var(--core);flex:none}
@@ -225,7 +225,7 @@ nav ul a:hover{color:var(--accent)}
 .dk p{margin:0;font-size:14.5px;color:#C4CED3;line-height:1.45}
 .dk b{color:#fff}
 /* Selector Iași / Județ */
-.mseg{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:1001;display:flex;background:rgba(14,22,28,.93);border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:4px;gap:2px;backdrop-filter:blur(6px)}
+.mseg{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:1001;display:flex;background:rgba(14,22,28,.93);border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:4px;gap:2px}
 .mseg button{font:600 14px var(--body);color:#C4CED3;background:none;border:0;border-radius:999px;padding:8px 16px;cursor:pointer;white-space:nowrap}
 .mseg button[aria-pressed=true]{background:#fff;color:#0E161C}
 @media (max-width:700px){.mseg{top:10px}.mseg button{padding:7px 13px;font-size:13.5px}}
@@ -389,6 +389,9 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
 .livepin b{position:absolute;left:-8px;top:-8px;width:16px;height:16px;border-radius:50%;border:2px solid var(--c);animation:ping 2.2s var(--ease) infinite;animation-delay:var(--d,0s)}
 @keyframes ping{0%{transform:scale(1);opacity:.9}100%{transform:scale(3);opacity:0}}
 .leaflet-pane{transition:opacity .5s var(--ease)}
+/* cât timp harta e mișcată, animațiile stau pe loc, ca telefonul să se ocupe doar de hartă */
+.moving .livepin b{animation-play-state:paused}
+@media (max-width:700px){nav{backdrop-filter:none;background:rgba(242,244,241,.98)}}
 .route-draw{transition:stroke-dashoffset 1.6s var(--ease)}
 .rsig{animation:pop .45s var(--ease) both;transform-box:fill-box;transform-origin:center}
 @keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.35)}100%{transform:scale(1)}}
@@ -1331,7 +1334,9 @@ function showRoute(rt){
   drawRouteOnMap(rt,false);
 }
 let routeRenderer=null;
+let dimmed=false;
 function dimMap(on){
+  dimmed=on;
   // cât timp e afișat traseul, restul hărții se estompează ca traseul să iasă în evidență
   if(typeof lines!=='undefined')lines.forEach(l=>l.setStyle({opacity:on?.28:.95}));
   const cp=map.getPane('casingPane');if(cp)cp.style.opacity=on?.25:1;
@@ -1401,14 +1406,15 @@ if(typeof L==='undefined'){
     $('statSens').textContent=`(${j.sens.length} sunt deja pe hartă)`;$('sensLine').textContent=`Pe hartă: ${c.hospital} spitale · ${c.school} școli · ${c.kindergarten} grădinițe`;
   }).catch(()=>{$('statSens').textContent='';$('sensLine').textContent='Instituțiile nu s-au putut încărca acum.'});
   return}
-map=L.map('map',{preferCanvas:true,zoomControl:false,scrollWheelZoom:false}).setView([47.1560,27.5850],13);
+map=L.map('map',{preferCanvas:true,renderer:L.canvas({padding:matchMedia('(pointer:coarse)').matches||matchMedia('(max-width:700px)').matches?.15:.3}),zoomControl:false,scrollWheelZoom:false}).setView([47.1560,27.5850],13);
 window.__ssMap=map;
 L.control.zoom({position:'topright'}).addTo(map);
 L.control.scale({imperial:false,position:'bottomright'}).addTo(map);
 map.on('click',()=>map.scrollWheelZoom.enable());
-const tl=[L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'© Esri, Maxar · © OpenStreetMap'}),
-  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,opacity:.5}),
-  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,opacity:.85})];
+map.on('movestart',()=>map.getContainer().classList.add('moving'));map.on('moveend',()=>map.getContainer().classList.remove('moving'));
+const tl=[L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,updateWhenZooming:false,attribution:'© Esri, Maxar · © OpenStreetMap'}),
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,updateWhenZooming:false,opacity:.5}),
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,updateWhenZooming:false,opacity:.85})];
 tl.forEach(l=>l.addTo(map));
 let tilesFailed=false;
 tl[0].on('tileerror',()=>{if(tilesFailed)return;tilesFailed=true;tl.forEach(l=>map.removeLayer(l));$('map').classList.add('schematic');$('mapfallback').hidden=false});
@@ -1437,14 +1443,16 @@ function roadInfo(w,k){
 function sigInfo(){return{types:['osm'],title:'Semafor',sub:'intersecție semaforizată',body:'Semaforul există în realitate (OpenStreetMap). Un roșu în Iași durează 30–90 s.',rule:'La roșu, dacă aerul e la MEDIUM sau HIGH, motorul se oprește. Un Duster salvează astfel circa 12 g CO₂ la fiecare oprire de 30 s.'}}
 function sensInfo(s){return{types:['osm'],title:s.name,sub:s.label+' · zonă sensibilă, rază '+s.r+' m',body:'Instituția există în OpenStreetMap. Raza zonei sensibile e o propunere a echipei.',rule:'Start-stop forțat chiar și la trafic mediu. '+s.note}}
 
-const renderer=L.canvas({padding:.5});
+// pe telefon, canvasul e doar puțin mai mare decât ecranul (altfel are de 4 ori suprafața lui, de desenat la fiecare mișcare)
+const PAD=matchMedia('(pointer:coarse)').matches||matchMedia('(max-width:700px)').matches?.15:.5;
+const renderer=L.canvas({padding:PAD});
 // conturul negru al străzilor stă într-un strat propriu, mereu sub culori (altfel, la readăugare, ajunge deasupra și le întunecă)
 map.createPane('casingPane').style.zIndex=390;
-const casingRenderer=L.canvas({padding:.5,pane:'casingPane'});
+const casingRenderer=L.canvas({padding:PAD,pane:'casingPane'});
 // zonele sensibile: toate cercurile într-un singur canvas, cu opacitatea pe tot stratul,
 // ca suprapunerile să nu se adune și să arate ca o singură zonă
 map.createPane('sensPane').style.zIndex=395;map.getPane('sensPane').style.opacity=.24;
-const sensRenderer=L.canvas({padding:.5,pane:'sensPane'});
+const sensRenderer=L.canvas({padding:PAD,pane:'sensPane'});
 function drawSens(){
   layers.sens.clearLayers();
   // grupăm instituțiile ale căror cercuri se suprapun mult (centrul uneia e în cercul celeilalte)
@@ -1466,9 +1474,13 @@ function sensGroupInfo(g,r){
     body:`${list}. Cercurile lor se suprapuneau, așa că apar ca o singură zonă. Instituțiile există în OpenStreetMap; raza e o propunere a echipei.`,
     rule:'Start-stop forțat chiar și la trafic mediu. '+(hosp?'Lângă spital: toată ziua.':'Mai ales între 07:30 și 08:15, când părinții opresc cu motorul pornit.')};
 }
-const casing=L.layerGroup().addTo(map);const towns=L.layerGroup();const lines=[];
+// drumurile: câte un singur obiect pe culoare și grosime (în loc de ~3.700), separat pentru oraș și restul județului
+const MOBILE=matchMedia('(pointer:coarse)').matches||matchMedia('(max-width:700px)').matches;
+const ROAD_BB=L.latLngBounds([47.05,27.40],[47.26,27.78]);
+const casing=L.layerGroup(),casingRest=L.layerGroup(),trafficRest=L.layerGroup();const towns=L.layerGroup();const lines=[];
+let restRoads=null,restBuilt=false;
 const layers={traffic:L.layerGroup(),sig:L.layerGroup(),core:L.layerGroup(),entry:L.layerGroup(),inner:L.layerGroup(),round:L.layerGroup(),sens:L.layerGroup(),off:L.layerGroup(),hoods:L.layerGroup()};
-Object.values(layers).forEach(l=>l.addTo(map));
+Object.entries(layers).forEach(([k,l])=>{if(!['traffic','sig','sens','hoods'].includes(k))l.addTo(map)});
 ZONES.forEach(z=>{
   const k=z.k;
   const c=L.circle(z.c,{radius:z.r,color:ZT[k].c,weight:k==='off'?1.5:2.5,dashArray:'7 6',fillColor:ZT[k].c,fillOpacity:k==='off'?.12:.2});
@@ -1498,14 +1510,43 @@ fetch('data/roundabouts.json').then(r=>r.json()).then(rs=>{
 [{n:'Iași',c:[47.16156,27.58378]},{n:'Pașcani',c:[47.24808,26.72564]},{n:'Hârlău',c:[47.42783,26.90074]},{n:'Târgu Frumos',c:[47.21006,27.01366]},{n:'Podu Iloaiei',c:[47.21223,27.27366]}]
   .forEach(t=>towns.addLayer(L.marker(t.c,{icon:L.divIcon({className:'',html:`<div class="hood town">${t.n}</div>`,iconSize:[0,0]}),interactive:false})));
 let lastSmall=null;
-function zoomStyle(force){
-  const small=map.getZoom()<12;if(small===lastSmall&&!force)return;lastSmall=small;
-  lines.forEach(l=>l.setStyle({weight:small?Math.max(1.5,l._w*.4):l._w}));
-  if(small){map.removeLayer(casing);if($('tHoods').checked){map.removeLayer(layers.hoods);towns.addTo(map)}}
-  else{if($('tTraffic').checked)casing.addTo(map);map.removeLayer(towns);if($('tHoods').checked)layers.hoods.addTo(map)}
+const setOn=(l,v)=>{if(v){if(!map.hasLayer(l)){l.addTo(map);return true}}else if(map.hasLayer(l))map.removeLayer(l);return false};
+// drumurile stau mereu sub semafoare și sub granița județului (același canvas)
+function roadsBack(){const ls=lines.filter(l=>l._map);for(const k of['R','Y','G'])ls.filter(l=>l._k===k).forEach(l=>l.bringToBack())}
+function updVis(){
+  if(!map._loaded)return;
+  const z=map.getZoom(),small=z<12,tr=$('tTraffic').checked,needRest=!ROAD_BB.contains(map.getBounds());
+  if(needRest&&!restBuilt&&restRoads)buildRest();
+  let moved=setOn(layers.traffic,tr);moved=setOn(trafficRest,tr&&needRest)||moved;if(moved)roadsBack();
+  setOn(casing,tr&&!small&&!MOBILE);setOn(casingRest,tr&&!small&&!MOBILE&&needRest);
+  setOn(layers.sig,$('tSig').checked&&z>=12);
+  setOn(layers.sens,$('t_sens').checked&&z>=12);
+  const hd=$('tHoods').checked;setOn(towns,hd&&small);setOn(layers.hoods,hd&&!small);
+  if(small!==lastSmall){lastSmall=small;lines.forEach(l=>l.setStyle({weight:small?Math.max(1.5,l._w*.4):l._w}))}
 }
-map.on('zoomend',()=>zoomStyle(false));
+const zoomStyle=()=>{lastSmall=null;updVis()};
+map.on('zoomend moveend',updVis);
+function nearestRoad(arr,ll){
+  const p=map.latLngToLayerPoint(ll),pad=.004;let best=null,bd=1/0;
+  for(const a of arr){const b=a.bb;if(ll.lat<b[0]-pad||ll.lat>b[1]+pad||ll.lng<b[2]-pad||ll.lng>b[3]+pad)continue;
+    let q=map.latLngToLayerPoint(a.ll[0]);
+    for(let i=1;i<a.ll.length;i++){const r=map.latLngToLayerPoint(a.ll[i]);const d=L.LineUtil.pointToSegmentDistance(p,q,r);if(d<bd){bd=d;best=a.w}q=r}}
+  return best}
+function buildRoads(list,trafficGroup,casingGroup){
+  const g={};
+  for(const a of list){const key=a.k+'|'+a.wgt;(g[key]||(g[key]={k:a.k,wgt:a.wgt,arr:[]})).arr.push(a)}
+  const small=map.getZoom()<12;
+  for(const k of['G','Y','R'])for(const o of Object.values(g).filter(o=>o.k===k)){
+    if(!MOBILE&&(k!=='G'||o.wgt>4))casingGroup.addLayer(L.polyline(o.arr.map(a=>a.ll),{renderer:casingRenderer,pane:'casingPane',color:'#000',weight:o.wgt+3,opacity:.5,smoothFactor:1.5,interactive:false}));
+    const ln=L.polyline(o.arr.map(a=>a.ll),{renderer,color:COL[k],weight:small?Math.max(1.5,o.wgt*.4):o.wgt,opacity:dimmed?.28:.95,smoothFactor:1.5});
+    ln._w=o.wgt;ln._k=k;ln._roads=o.arr;lines.push(ln);
+    ln.on('click',e=>{L.DomEvent.stop(e);const w=nearestRoad(o.arr,e.latlng);if(w)showInfo(roadInfo(w,k))});
+    trafficGroup.addLayer(ln);
+  }
+}
+function buildRest(){restBuilt=true;buildRoads(restRoads,trafficRest,casingRest)}
 HOODS.forEach(h=>layers.hoods.addLayer(L.marker(h.c,{icon:L.divIcon({className:'',html:`<div class="hood${h.pos?' '+h.pos:''}">${h.n}</div>`,iconSize:[0,0]}),interactive:false})));
+updVis();
 
 const st=$('mstatus');
 const ENDPOINTS=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter','https://overpass.private.coffee/api/interpreter'];
@@ -1517,7 +1558,7 @@ function clusterCount(pts,m){const used=new Uint8Array(pts.length);let n=0;
   return n}
 function lenKm(g){let d=0;for(let i=1;i<g.length;i++)d+=map.distance([g[i-1].lat,g[i-1].lon],[g[i].lat,g[i].lon]);return d/1000}
 function draw(data){
-  layers.traffic.clearLayers();casing.clearLayers();lines.length=0;layers.sig.clearLayers();layers.sens.clearLayers();sensPts.length=0;sigPts.length=0;
+  layers.traffic.clearLayers();casing.clearLayers();trafficRest.clearLayers();casingRest.clearLayers();lines.length=0;restBuilt=false;layers.sig.clearLayers();layers.sens.clearLayers();sensPts.length=0;sigPts.length=0;
   let km=0;const cnt={hospital:0,school:0,kindergarten:0};const groups={G:[],Y:[],R:[]};
   for(const el of data.elements){
     const tags=el.tags||{};
@@ -1533,14 +1574,17 @@ function draw(data){
     else if(el.type==='node'&&tags.highway==='traffic_signals'){sigPts.push([el.lat,el.lon]);
       layers.sig.addLayer(L.circleMarker([el.lat,el.lon],{renderer,radius:4,color:'#fff',weight:1.5,fillColor:'#E5383B',fillOpacity:1}).on('click',e=>{L.DomEvent.stop(e);showInfo(sigInfo())}));}
   }
+  const cityRoads=[];restRoads=[];
   for(const k of['G','Y','R'])for(const w of groups[k]){
     const ll=w.geometry.map(p=>[p.lat,p.lon]);const wgt=/^(motorway|trunk|primary|secondary)/.test(w.tags.highway)?5:3.5;
-    if(k!=='G'||wgt>4)casing.addLayer(L.polyline(ll,{renderer:casingRenderer,pane:'casingPane',color:'#000',weight:wgt+3,opacity:.5,interactive:false}));
-    const ln=L.polyline(ll,{renderer,color:COL[k],weight:wgt,opacity:.95});ln._w=wgt;lines.push(ln);ln.on('click',e=>{L.DomEvent.stop(e);showInfo(roadInfo(w,k))});layers.traffic.addLayer(ln);
+    let a=90,b=-90,c=180,d=-180;for(const p of ll){if(p[0]<a)a=p[0];if(p[0]>b)b=p[0];if(p[1]<c)c=p[1];if(p[1]>d)d=p[1]}
+    const it={ll,w,k,wgt,bb:[a,b,c,d]};
+    (ROAD_BB.intersects(L.latLngBounds([a,c],[b,d]))?cityRoads:restRoads).push(it);
     km+=lenKm(w.geometry);
   }
+  buildRoads(cityRoads,layers.traffic,casing);
   drawSens();
-  zoomStyle(true);
+  zoomStyle();
   const total=cnt.hospital+cnt.school+cnt.kindergarten;
   const nInter=clusterCount(sigPts,40);
   $('kmTot').textContent=fmt(km)+' km';$('nSig').textContent=nInter;$('nSig').title=sigPts.length+' semafoare în '+nInter+' intersecții';$('statSens').textContent=`(${total} sunt deja pe hartă)`;
@@ -1594,10 +1638,9 @@ async function load(){
 }
 load();
 const bind=(id,layer)=>$(id).addEventListener('change',e=>e.target.checked?map.addLayer(layer):map.removeLayer(layer));
-bind('tTraffic',layers.traffic);bind('tBorder',borderLayer);bind('tSig',layers.sig);
-$('tTraffic').addEventListener('change',e=>{if(e.target.checked&&map.getZoom()>=12)casing.addTo(map);else map.removeLayer(casing)});
-$('tHoods').addEventListener('change',e=>{if(e.target.checked)(map.getZoom()<12?towns:layers.hoods).addTo(map);else{map.removeLayer(layers.hoods);map.removeLayer(towns)}});
-['core','entry','inner','round','sens','off'].forEach(k=>bind('t_'+k,layers[k]));
+bind('tBorder',borderLayer);
+['tTraffic','tSig','tHoods','t_sens'].forEach(id=>$(id).addEventListener('change',updVis));
+['core','entry','inner','round','off'].forEach(k=>bind('t_'+k,layers[k]));
 const mp=$('mpanel');
 $('mtoggle').onclick=()=>{mp.classList.toggle('closed');$('mtoggle').textContent=mp.classList.contains('closed')?'Arată legenda':'Ascunde legenda'};
 $('viewCity').onclick=()=>map.flyTo([47.1560,27.5850],13,{duration:.8});

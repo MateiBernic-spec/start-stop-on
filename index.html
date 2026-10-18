@@ -369,7 +369,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
       <div class="stat"><b>7</b><span>noduri centrale</span></div>
       <div class="stat"><b>4</b><span>intrări în oraș</span></div>
       <div class="stat"><b>5</b><span>noduri și sensuri giratorii</span></div>
-      <div class="stat"><b>600+</b><span>școli și grădinițe în județ, plus 21 de spitale <span id="statSens" style="display:inline;margin:0"></span></span></div>
+      <div class="stat"><b>600+</b><span>școli și grădinițe în județ, plus spitalele (21 publice) <span id="statSens" style="display:inline;margin:0"></span></span></div>
     </div>
   </div>
 </header>
@@ -869,7 +869,7 @@ const sensCard=document.createElement('article');sensCard.className='zcard';
 sensCard.innerHTML=`<header><i style="border-color:#13212B;background:#fff"></i><h3>Zone sensibile</h3></header><div class="rule">Start-stop forțat chiar și la trafic mediu</div>
 <ul><li><strong>Spitale</strong><span>Toată ziua, pe o rază de aproximativ 220 m.</span></li>
 <li><strong>Școli și grădinițe</strong><span>Mai ales între 07:30 și 08:15, când părinții opresc cu motorul pornit. Rază de 100–130 m.</span></li>
-<li><strong id="sensLine">Se încarcă din OpenStreetMap…</strong><span>În județ sunt peste 600 de unități școlare (ISJ Iași, 2023–2024) și 21 de spitale. Pe hartă apar, cu cercuri albe, cele marcate în OpenStreetMap; restul se adaugă pe măsură ce sunt cartografiate.</span></li></ul>`;
+<li><strong id="sensLine">Se încarcă din OpenStreetMap…</strong><span>În județ sunt peste 600 de unități școlare (ISJ Iași, 2023–2024) și 21 de spitale publice, plus cele private. Pe hartă apar, cu cercuri albe, cele marcate în OpenStreetMap; restul se adaugă pe măsură ce sunt cartografiate.</span></li></ul>`;
 zgrid.insertBefore(sensCard,zgrid.children[3]);
 
 /* ---------------- CĂUTARE ---------------- */

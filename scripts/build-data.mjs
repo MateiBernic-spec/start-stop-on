@@ -68,6 +68,37 @@ if (sig.length < 200 || roads.length < 1500 || sens.length < 100) throw new Erro
 const out = JSON.stringify({ built: new Date().toISOString(), area: 'Județul Iași', sig, roads, sens, border });
 await writeFile('data/osm.json', out);
 console.log('signals', sig.length, 'roads', roads.length, 'sens', sens.length, 'border', border.length, 'bytes', out.length);
+
+// ---- Sensuri giratorii reale (OSM), cu numele străzilor care intră în ele ----
+const QR = `[out:json][timeout:300];${A}
+way["junction"~"^(roundabout|circular)$"]["highway"~"^(motorway|trunk|primary|secondary|tertiary)(_link)?$"](area.c);
+out geom tags;`;
+const dr = await overpass(QR);
+const rings = [];
+for (const w of dr.elements) if (w.geometry) rings.push({ name: w.tags?.name || '', hw: w.tags.highway, g: w.geometry.map(p => [p.lat, p.lon]) });
+// un giratoriu poate fi împărțit în mai multe bucăți de drum: le unim după distanța dintre centre
+const cen = g => [g.reduce((a, p) => a + p[0], 0) / g.length, g.reduce((a, p) => a + p[1], 0) / g.length];
+const dm = (a, b) => Math.hypot((a[0] - b[0]) * 111320, (a[1] - b[1]) * 75700);
+const groupsR = [];
+for (const r of rings) {
+  const c = cen(r.g); let gr = groupsR.find(x => dm(x.c, c) < 90);
+  if (!gr) { gr = { c, pts: [], names: new Set(), hw: r.hw }; groupsR.push(gr); }
+  gr.pts.push(...r.g); if (r.name) gr.names.add(r.name); gr.c = cen(gr.pts);
+}
+const rank = { motorway: 0, trunk: 1, primary: 2, secondary: 3, tertiary: 4 };
+const round = groupsR.map(gr => {
+  const rad = Math.max(...gr.pts.map(p => dm(p, gr.c)));
+  const near = new Map();
+  for (const [n, h, g] of roads) {
+    if (!n || /sens giratoriu|giratoriu|rond/i.test(n)) continue;
+    let md = 1e9; for (const p of g) md = Math.min(md, dm(p, gr.c));
+    if (md < rad + 40) near.set(n, Math.min(near.get(n) ?? 9, rank[(h || '').replace('_link', '')] ?? 9));
+  }
+  const streets = [...near.entries()].sort((a, b) => a[1] - b[1]).map(x => x[0]).slice(0, 4);
+  return [[...gr.names][0] || '', streets, R5(gr.c[0]), R5(gr.c[1]), Math.round(rad), gr.hw];
+}).filter(r => r[4] >= 12);
+await writeFile('data/roundabouts.json', JSON.stringify(round));
+console.log('roundabouts', round.length);
 } catch (e) { console.error('MAIN FAIL (păstrez datele vechi):', e.message); }
 
 // ---- Index cu toate străzile cu nume din județ, pentru căutare ----

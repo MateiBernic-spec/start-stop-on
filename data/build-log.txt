@@ -1,16 +1,10 @@
-overpass fail https://overpass-api.de/api/interpreter 502
-overpass fail https://overpass.kumi.systems/api/interpreter 504
-overpass fail https://overpass.private.coffee/api/interpreter 504
 overpass fail https://overpass-api.de/api/interpreter 504
 overpass fail https://overpass.kumi.systems/api/interpreter 504
 overpass fail https://overpass.private.coffee/api/interpreter 504
-overpass fail https://overpass-api.de/api/interpreter 504
-overpass fail https://overpass.kumi.systems/api/interpreter 504
-overpass fail https://overpass.private.coffee/api/interpreter 502
-signals 438 roads 3719 sens 276 border 115 bytes 572740
+signals 438 roads 3723 sens 276 border 115 bytes 573045
 roundabouts 20
 overpass fail https://overpass-api.de/api/interpreter 502
-overpass fail https://overpass.kumi.systems/api/interpreter 502
+overpass fail https://overpass.kumi.systems/api/interpreter 504
 overpass fail https://overpass.private.coffee/api/interpreter 504
 communes 98
-streets 2895 places 456
+streets 2901 places 456
